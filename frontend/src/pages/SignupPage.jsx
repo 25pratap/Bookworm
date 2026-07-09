@@ -1,74 +1,121 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-function SignupPage() {
+function SignUpPage() {
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [age, setAge] = useState("");
+  const [gender, setGender] = useState("");
+ 
+
+  const navigate = useNavigate();
 
   const handleSignup = async (e) => {
     e.preventDefault();
 
-    const response = await fetch("http://127.0.0.1:8000/signup", {
+    if (password !== confirmPassword) {
+      toast.error("Passwords do not match!");
+      return;
+    }
+
+    const res = await fetch("http://localhost:8000/register", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({
+        name,
+        email,
+        password,
+        age: age ? Number(age) : null,
+        gender,
+        role: "user",
+      }),
     });
 
-    const data = await response.json();
-    alert(data.message);
+   const data = await res.json();
+
+if (res.ok) {
+  toast.success("Account created successfully!");
+  navigate("/login");
+} else {
+  console.log(data);
+  toast.error(data.detail || "Signup failed");
+}
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md">
-        <h1 className="text-3xl font-bold text-center mb-6">
+    <div className="flex items-center justify-center min-h-screen bg-gray-100">
+      <form
+        onSubmit={handleSignup}
+        className="bg-white p-8 rounded-xl shadow-md w-96"
+      >
+        <h2 className="text-2xl font-bold mb-6 text-center">
+          Sign Up
+        </h2>
+
+        <input
+          type="text"
+          placeholder="Full Name"
+          className="w-full p-2 mb-2 border rounded"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
+
+        <input
+          type="email"
+          placeholder="Email"
+          className="w-full p-2 mb-2 border rounded"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+
+        <input
+          type="password"
+          placeholder="Password"
+          className="w-full p-2 mb-2 border rounded"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+
+        <input
+          type="password"
+          placeholder="Confirm Password"
+          className="w-full p-2 mb-2 border rounded"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+        />
+
+        <input
+          type="number"
+          placeholder="Age (optional)"
+          className="w-full p-2 mb-2 border rounded"
+          value={age}
+          onChange={(e) => setAge(e.target.value)}
+        />
+
+        <select
+          className="w-full p-2 mb-2 border rounded"
+          value={gender}
+          onChange={(e) => setGender(e.target.value)}
+        >
+          <option value="">Select Gender</option>
+          <option value="male">Male</option>
+          <option value="female">Female</option>
+          <option value="other">Other</option>
+        </select>
+
+        <button
+          type="submit"
+          className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700"
+        >
           Create Account
-        </h1>
-
-        <form onSubmit={handleSignup} className="space-y-4">
-          <div>
-            <label className="block mb-1 font-medium">
-              Email
-            </label>
-            <input
-              type="email"
-              placeholder="Enter your email"
-              className="w-full border rounded-lg p-3"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block mb-1 font-medium">
-              Password
-            </label>
-            <input
-              type="password"
-              placeholder="Enter your password"
-              className="w-full border rounded-lg p-3"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="w-full bg-blue-600 text-white p-3 rounded-lg hover:bg-blue-700"
-          >
-            Sign Up
-          </button>
-        </form>
-
-        <p className="text-center mt-4 text-gray-600">
-          Already have an account? Login
-        </p>
-      </div>
+        </button>
+      </form>
     </div>
   );
 }
 
-export default SignupPage;
+export default SignUpPage;

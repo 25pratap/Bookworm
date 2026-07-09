@@ -24,3 +24,13 @@ def add_review(review: Review):
         raise HTTPException(status_code=500, detail="Failed to add review")
 
     return {"message": "Review added successfully"}
+@router.get("/reviews")
+def get_all_reviews():
+    result = supabase.table("reviews").select("*").execute()
+    return result.data
+
+
+@router.delete("/reviews/{review_id}")
+def delete_review(review_id: int):
+    supabase.table("reviews").delete().eq("id", review_id).execute()
+    return {"message": "Review deleted successfully"}

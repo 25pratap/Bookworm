@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import {useNavigate} from "react-router-dom";
+import { toast } from "react-toastify";
 
 function BookDetailsPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
 
   const [book, setBook] = useState(null);
   const [reviews, setReviews] = useState([]);
@@ -34,10 +37,13 @@ function BookDetailsPage() {
       .then((data) => setReviews(data))
       .catch((error) => console.error(error));
   };
-
-  const handleSubmit = async () => {
+  const handleRecommendations = () => {
+    navigate(`/recommendations/${encodeURIComponent(book.title)}`);
+    };
+  
+    const handleSubmit = async () => {
     if (!name || !comment) {
-      alert("Please fill all fields.");
+      toast.error("Please fill all fields.");
       return;
     }
 
@@ -116,7 +122,10 @@ function BookDetailsPage() {
               {book.description}
             </p>
 
-            <button className="mt-8 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg">
+            <button
+              onClick={handleRecommendations}
+              className="mt-8 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg"
+            >
               Recommend Similar Books
             </button>
           </div>

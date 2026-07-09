@@ -1,4 +1,4 @@
-import AddBookForm from "../components/AddBookForm";
+import AddBookForm from "../../components/AddBookForm";
 
 function AddBookPage() {
   return <AddBookForm />

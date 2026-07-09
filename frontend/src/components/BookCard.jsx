@@ -1,74 +1,68 @@
 import { Link } from "react-router-dom";
+import noBook from "../assets/no-book.png";
+import { toast } from "react-toastify";
 
-function BookCard({ id, title, author }) {
 
-  const handleRecommend = async () => {
-    const response = await fetch(
-      `http://127.0.0.1:8000/recommend/${encodeURIComponent(title)}`
-    );
-
-    const data = await response.json();
-
-    alert(`Recommended Books:\n${data.recommendations.join("\n")}`);
-  };
-
-  const handleDelete = async () => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this book?"
-    );
-
-    if (!confirmDelete) return;
-
-    const response = await fetch(
-      `http://127.0.0.1:8000/books/${id}`,
-      {
-        method: "DELETE",
-      }
-    );
-
-    const data = await response.json();
-
-    alert(data.message);
-
-    // Reload the page to refresh the book list
-    window.location.reload();
-  };
-
+function BookCard({
+  id,
+  title,
+  author,
+  price,
+  rating,
+  genre,
+  onAddToCart,
+}) {
   return (
     <div className="bg-white rounded-xl shadow-md p-5">
+
+      {/* COVER PLACEHOLDER (like your image) */}
+      <div className="w-full h-64 bg-gray-200 rounded-lg flex items-center justify-center mb-4">
+        {/* <span className="text-3xl text-gray-400 font-semibold">
+          No Cover
+        </span> */}
+        <img src={noBook} alt="No Cover" className="w-64 h-64 object-cover" />
+      </div>
+
+      {/* TITLE */}
       <h2 className="text-xl font-bold">{title}</h2>
 
-      <p className="text-gray-500 mb-4">{author}</p>
+      {/* AUTHOR */}
+      <p className="text-blue-600">{author}</p>
 
-      <div className="flex flex-wrap gap-3">
+      {/* GENRE */}
+      <p className="text-gray-600 mt-1">{genre}</p>
+
+      {/* RATING + PRICE ROW */}
+      <div className="flex justify-between items-center mt-3">
+        <p className="text-yellow-500">
+          ⭐ {rating ? rating : 0}
+        </p>
+
+        <p className="text-green-600 font-bold">
+          Rs. {price}
+        </p>
+      </div>
+
+      {/* BUTTONS */}
+      <div className="flex gap-2 mt-5">
 
         <Link
           to={`/books/${id}`}
-          className="bg-green-600 text-white px-4 py-2 rounded"
+          className="bg-green-600 text-white px-4 py-2 rounded flex-1 text-center"
         >
           View Details
         </Link>
 
-        <button
-          onClick={handleRecommend}
-          className="bg-blue-600 text-white px-4 py-2 rounded"
-        >
-          Recommend
-        </button>
-
-        <Link
-          to={`/editbook/${id}`}
-          className="bg-yellow-500 text-white px-4 py-2 rounded"
-        >
-          Edit
-        </Link>
 
         <button
-          onClick={handleDelete}
-          className="bg-red-600 text-white px-4 py-2 rounded"
-        >
-          Delete
-        </button>
+            onClick={() => {
+              toast.info("Adding to cart...");
+              onAddToCart();
+            }}
+            className="bg-indigo-600 text-white px-4 py-2 rounded flex-1"
+          >
+            Add to Cart
+          </button>
 
       </div>
     </div>
