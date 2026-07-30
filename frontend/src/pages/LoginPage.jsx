@@ -1,6 +1,8 @@
 import { useState, useContext } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
+import { toast } from "react-toastify";
+import { Eye , EyeOff } from "lucide-react";
 
 function LoginPage() {
     const navigate = useNavigate();
@@ -8,13 +10,17 @@ function LoginPage() {
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [showPassword ,setShowPassword] = useState(false);
+    const [showConfirmPassword,setShowConfirmPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
+    const [success, setSuccess] = useState("");
 
     const handleLogin = async (e) => {
         e.preventDefault();
         setLoading(true);
         setError("");
+        setSuccess("");
 
         try {
             const response = await fetch("http://127.0.0.1:8000/login", {
@@ -28,38 +34,47 @@ function LoginPage() {
             const data = await response.json();
 
             if (!response.ok) {
-                setError(data.detail || data.message || "Login failed");
+                toast.error(data.detail || data.message || "Login failed");
                 return;
             }
 
             if (data.message !== "Login successful") {
-                setError("Invalid email or password");
+                toast.error("Invalid email or password");
                 return;
             }
 
+            toast.success("Login successful");
             // Save token
             if (data.token) {
-                login(data.token);
-                localStorage.setItem("token", data.token);
+                login(data);
             }
 
             // Normalize role
             const role = data.role?.trim().toLowerCase();
-            localStorage.setItem("role", role || "");
+            localStorage.setItem("role", role || "user");
             localStorage.setItem("email", data.email || "");
+        
 
-            // Redirect logic
+          // Don't allow admins here
             if (role === "admin") {
-                navigate("/admin");
-            } else if (!data.favorite_genres || data.favorite_genres.length === 0) {
-                navigate("/preferences");
-            } else {
-                navigate("/books");
+                toast.error("Please use the Admin Login page.");
+                localStorage.clear();
+                return;
             }
 
+            setTimeout(() => {
+
+            if (!data.favorite_genres || data.favorite_genres.length === 0) {
+                    navigate("/preferences");
+                } else {
+                    navigate("/books");
+                }
+
+            }, 1500);
+        
         } catch (err) {
             console.error(err);
-            setError("Server not reachable. Try again later.");
+            toast.error("Server not reachable. Try again later.");
         } finally {
             setLoading(false);
         }
@@ -73,14 +88,8 @@ function LoginPage() {
                     Welcome Back
                 </h1>
 
-                {error && (
-                    <div className="bg-red-100 text-red-700 p-3 rounded-lg mb-4 text-sm">
-                        {error}
-                    </div>
-                )}
-
                 <form onSubmit={handleLogin} className="space-y-4">
-
+                    
                     <input
                         type="email"
                         placeholder="Enter your email"
@@ -90,19 +99,31 @@ function LoginPage() {
                         required
                     />
 
-                    <input
-                        type="password"
-                        placeholder="Enter your password"
-                        className="w-full border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                    />
+                    <div className="relative">
+                        <input
+                            type={showPassword ? "text" : "password"}
+                            placeholder ="Enter your password"
+                            className= "w-full border rounded-lg p-3 pr-12 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                            value ={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                        />
+                        <button
+                            type ="button"
+                            onClick={() => setShowPassword (!showPassword)}
+                            className="absolute inset-y-0 right-3 flex items-center text-gray-500 hover:text-gray-700"
+                        >
+                            {showPassword ? <EyeOff size ={20}/> : <Eye size ={20}/>}
+                        </button>
+                    </div>
+                       
+                    
 
                     <button
                         type="submit"
                         disabled={loading}
                         className={`w-full p-3 rounded-lg text-white transition ${
+                    
                             loading
                                 ? "bg-blue-300 cursor-not-allowed"
                                 : "bg-blue-600 hover:bg-blue-700"

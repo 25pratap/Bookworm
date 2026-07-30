@@ -1,15 +1,19 @@
+import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 function SignUpPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [age, setAge] = useState("");
   const [gender, setGender] = useState("");
  
-
   const navigate = useNavigate();
 
   const handleSignup = async (e) => {
@@ -37,67 +41,102 @@ function SignUpPage() {
 
    const data = await res.json();
 
-if (res.ok) {
-  toast.success("Account created successfully!");
-  navigate("/login");
-} else {
-  console.log(data);
-  toast.error(data.detail || "Signup failed");
-}
+    if (res.ok) {
+
+      toast.success("Account created successfully!");
+
+      setTimeout(() => {
+        navigate("/login");
+      }, 1500);
+
+    } else {
+
+      console.log(data);
+
+      toast.error(data.detail || "Signup failed");
+
+    }
   };
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
       <form
         onSubmit={handleSignup}
-        className="bg-white p-8 rounded-xl shadow-md w-96"
+        className="bg-white p-8 rounded-2xl shadow-lg w-105 space-y-5"
       >
-        <h2 className="text-2xl font-bold mb-6 text-center">
+        <h2 className="text-3xl font-bold text-center mb-2">
           Sign Up
         </h2>
 
         <input
           type="text"
           placeholder="Full Name"
-          className="w-full p-2 mb-2 border rounded"
+          className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
           value={name}
           onChange={(e) => setName(e.target.value)}
+          required
         />
 
         <input
           type="email"
           placeholder="Email"
-          className="w-full p-2 mb-2 border rounded"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+          required
         />
 
+      {/*password*/} 
+      <div className ="relative">
         <input
-          type="password"
-          placeholder="Password"
-          className="w-full p-2 mb-2 border rounded"
+          type={showPassword ? "text":"password"}
+          placeholder="Enter your password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+         className="w-full px-4 py-3 pr-12 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
         />
-
+      
+        <button
+          type="button"
+          onClick={()=>setShowPassword(!showPassword)}
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+        >
+          {showPassword ? <EyeOff size={20}/> :<Eye size={20}/>}
+        </button>
+      </div>
+        
+     {/* confirmpassword*/} 
+      <div className ="relative">
         <input
-          type="password"
-          placeholder="Confirm Password"
-          className="w-full p-2 mb-2 border rounded"
+          type={showConfirmPassword ? "text":"password"}
+          placeholder="Confirm your password"
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
+          className="w-full px-4 py-3 pr-12 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+          required
         />
+        <button
+          type="button"
+          onClick={()=>setShowConfirmPassword(!showConfirmPassword)}
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+        >
+          {showConfirmPassword ? <EyeOff size={20}/> :<Eye size={20}/>}
+        </button>
+      </div>
+       
 
         <input
           type="number"
+          min="1"
+          max="120"
           placeholder="Age (optional)"
-          className="w-full p-2 mb-2 border rounded"
+          className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
           value={age}
           onChange={(e) => setAge(e.target.value)}
         />
 
         <select
-          className="w-full p-2 mb-2 border rounded"
+          className="w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
           value={gender}
           onChange={(e) => setGender(e.target.value)}
         >
@@ -109,7 +148,7 @@ if (res.ok) {
 
         <button
           type="submit"
-          className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700"
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition"
         >
           Create Account
         </button>

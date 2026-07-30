@@ -1,5 +1,5 @@
 import { useState } from "react";
-
+import { toast } from "react-toastify";
 function AddBookForm() {
   const [title, setTitle] = useState("");
   const [author, setAuthor] = useState("");
@@ -31,6 +31,12 @@ function AddBookForm() {
 
   try {
     const token = localStorage.getItem("token");
+
+    if (!token) {
+      toast.error("You must be logged in to add a book.");
+      setLoading(false);
+      return;
+    }
 
     const response = await fetch("http://localhost:8000/books", {
     method: "POST",

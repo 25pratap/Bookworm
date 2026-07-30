@@ -34,6 +34,11 @@ function GenrePreferencePage() {
   };
 
 const savePreferences = async () => {
+  if (selected.length === 0) {
+    toast.error("Please select at least one genre");
+    return;
+  }
+
   try {
     const res = await fetch("http://localhost:8000/preferences", {
       method: "PUT",
@@ -52,7 +57,7 @@ const savePreferences = async () => {
     console.log("Response:", data);
 
     if (res.ok) {
-      toast.success(data.message);
+      toast.success(data.message || "Preferences saved successfully");
       navigate("/books");
     } else {
       toast.error(data.detail || JSON.stringify(data));

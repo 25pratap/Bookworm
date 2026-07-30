@@ -1,20 +1,20 @@
-from pydantic import BaseModel
+from pydantic import BaseModel,EmailStr,Field
 from typing import List, Optional
 from datetime import date
 
 # user models
 class UserSignup(BaseModel):
-    name: str
-    email: str
-    password: str
+    name: str= Field(...,min_length=2)
+    email: EmailStr
+    password: str=Field(...,min_length=6)
     role: str = "user"
     age: Optional[int] = None
     gender: Optional[str] = None
     favorite_genres: Optional[List[str]] = []   
 
 class UserLogin(BaseModel):
-    email: str
-    password: str
+    email: EmailStr
+    password: str=Field(...,min_length=6)
 
 #Book models
 class Book(BaseModel):
@@ -32,7 +32,6 @@ class Book(BaseModel):
 #Review model
 class Review(BaseModel):
     book_id: int
-    name: str
     rating: int
     comment: str
 

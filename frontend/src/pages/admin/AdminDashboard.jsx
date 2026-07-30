@@ -6,7 +6,7 @@ import DashboardCard from "../../components/DashboardCard";
 import QuickActionButton from "../../components/QuickActionButton";
 import StatsCard from "../../components/StatsCard";
 import AdminFooter from "../../components/AdminFooter";
-
+import { toast } from "react-toastify";
 function AdminDashboard() {
 
   const navigate = useNavigate();
@@ -20,7 +20,12 @@ function AdminDashboard() {
 
   const loadStats = async () => {
     try {
-      const res = await fetch("http://localhost:8000/admin/stats");
+      const token = localStorage.getItem("token");
+      const res = await fetch("http://localhost:8000/admin/stats", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       if (!res.ok) {
         throw new Error("Failed to load dashboard statistics");
@@ -32,6 +37,7 @@ function AdminDashboard() {
 
     } catch (err) {
       console.error(err);
+      toast.error("Failed to load dashboard statistics");
     }
   };
 
@@ -53,7 +59,13 @@ function AdminDashboard() {
     logout();
     localStorage.removeItem("role");
     localStorage.removeItem("email");
-    navigate("/");
+    localStorage.removeItem("name");
+
+    toast.success("Logged out successfully");
+
+    setTimeout(() => {
+      navigate("/");
+    }, 1500);
   };
 
   return (

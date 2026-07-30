@@ -78,6 +78,10 @@ function Navbar() {
                 Cart
               </NavLink>
 
+              <Link to="/orders">
+                My Orders
+              </Link>
+
 
               {role === "admin" && (
                 <NavLink to="/admin" className={navStyle}>

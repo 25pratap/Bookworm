@@ -33,6 +33,7 @@ function RecommendationsPage() {
 
     getRecommendations();
   }, [title]);
+  
 return (
   <div className="max-w-5xl mx-auto p-8">
 

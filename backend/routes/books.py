@@ -6,8 +6,27 @@ router = APIRouter()
 
 @router.get("/books")
 def get_books():
-    result = supabase.table("books").select("*").execute()
-    return result.data
+    books = supabase.table("books").select("*").execute().data
+    for book in books:
+        reviews=(
+            supabase
+            .table("reviews")
+            .select("rating")
+            .eq("book_id", book["id"])
+            .execute()
+            .data
+        )
+        if reviews:
+            average = sum(
+                review["rating"] for review in reviews
+            ) / len(reviews)
+
+            book["rating"] = round(average, 1)
+
+        else:
+            book["rating"] = 0
+
+    return books
 
 @router.get("/books/{book_id}")
 def get_book(book_id: int):

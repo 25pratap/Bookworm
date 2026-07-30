@@ -4,6 +4,7 @@ import BooksPage from "./pages/BooksPage.jsx";
 import BookDetailsPage from "./pages/BookDetailsPage.jsx";
 import SignupPage from "./pages/SignupPage";
 import LoginPage from "./pages/LoginPage";
+import AdminLoginPage from "./pages/admin/AdminLoginPages.jsx";
 import Navbar from "./components/Navbar.jsx";
 import AdminDashboard from "./pages/admin/AdminDashboard.jsx";
 import ManageBooks from "./pages/admin/ManageBooks";
@@ -58,7 +59,8 @@ function App() {
         }/>
               
 
-      <Route path="/admin" element={<ProtectedRoute role="admin"><AdminDashboard /></ProtectedRoute>} />
+      <Route path="/admin/login" element={<AdminLoginPage />} />
+      <Route path="/admin/dashboard" element={<ProtectedRoute role="admin"><AdminDashboard /></ProtectedRoute>} />
 
       <Route path="/admin/managebooks" element={<ProtectedRoute role="admin"><ManageBooks /></ProtectedRoute>} />
 
@@ -69,17 +71,21 @@ function App() {
       <Route path="/admin/editbook/:id" element={<ProtectedRoute role="admin"><EditBookPage /></ProtectedRoute>} />
       <Route path="/admin/reviews" element={<ManageReviews />} />
 
-<Route path="/admin/analytics" element={<Analytics />} />
-<Route path="/orders" element={<OrdersPage />} />
-<Route path="/cart" element={<CartPage />} />
-<Route path="/checkout" element={<CheckoutPage />} />
-<Route path="/payment" element={<PaymentPage />} />
-<Route path="/delivery" element={<DeliveryPage />} />
+      <Route path="/admin/analytics" element={<Analytics />} />
+      <Route path="/orders" element={<OrdersPage />} />
+      <Route path="/cart" element={<CartPage />} />
+      <Route path="/checkout" element={<CheckoutPage />} />
+      <Route path="/payment" element={<PaymentPage />} />
+      <Route path="/delivery" element={<DeliveryPage />} />
 
-</Routes>
-<ToastContainer position="top-right"autoClose={3000}/>
-    </BrowserRouter>
+      </Routes>
+      <ToastContainer position="top-right"autoClose={3000}/>
+        </BrowserRouter>
   );
+      <Route 
+      path="/orders" 
+      element={<OrdersPage />} 
+    />
 }
 
 export default App;

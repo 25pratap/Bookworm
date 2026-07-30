@@ -1,16 +1,12 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import {useNavigate} from "react-router-dom";
+import { useParams,useNavigate} from "react-router-dom";
 import { toast } from "react-toastify";
 
 function BookDetailsPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-
   const [book, setBook] = useState(null);
   const [reviews, setReviews] = useState([]);
-
-  const [name, setName] = useState("");
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
   
@@ -23,7 +19,7 @@ function BookDetailsPage() {
     : "0.0";
 
   useEffect(() => {
-    fetch(`http://localhost:8000/books/${id}`)
+    fetch(`http://127.0.0.1:8000/books/${id}`)
       .then((response) => response.json())
       .then((data) => setBook(data))
       .catch((error) => console.error(error));
@@ -31,51 +27,85 @@ function BookDetailsPage() {
     loadReviews();
   }, [id]);
 
-  const loadReviews = () => {
-    fetch(`http://localhost:8000/reviews/${id}`)
-      .then((response) => response.json())
-      .then((data) => setReviews(data))
-      .catch((error) => console.error(error));
-  };
-  const handleRecommendations = () => {
-    navigate(`/recommendations/${encodeURIComponent(book.title)}`);
-    };
-  
-    const handleSubmit = async () => {
-    if (!name || !comment) {
-      toast.error("Please fill all fields.");
-      return;
+  const loadReviews = async () => {
+
+    try {
+
+      const response = await fetch(
+        `http://127.0.0.1:8000/reviews/${id}`
+      );
+
+
+      const data = await response.json();
+      console.log("DATA:", data);
+
+      if (!response.ok) {
+        toast.error("Failed to load reviews");
+        return;
+      }
+      setReviews(data);
+    } catch (error) {
+      console.error("LOAD REVIEWS ERROR:",error);
+      toast.error("Unable to load reviews");
+
     }
 
-    const review = {
-      book_id: Number(id),
-      name,
-      rating,
-      comment,
-    };
+  };
+    const handleRecommendations = () => {
+      navigate(`/recommendations/${encodeURIComponent(book.title)}`);
+      };
+    
+      const handleSubmit = async () => {
+      if (!comment.trim()) {
+        toast.error("Please write your review.");
+        return;
+      }
 
-    await fetch("http://localhost:8000/reviews", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(review),
-    });
+      try {
+        const review = {
+            book_id: Number(id),
+            rating:Number(rating),
+            comment:comment.trim()
+          };
 
-    loadReviews();
+      const res = await fetch("http://127.0.0.1:8000/reviews", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify(review),
+      });
 
-    setName("");
-    setRating(5);
-    setComment("");
+      const data =await res.json();
+      console.log("Review response:",data);
+
+      if (!res.ok) {
+        toast.error(data.detail || "Failed to submit review");
+        return;
+      }
+
+      toast.success("Review submitted successfully"); 
+
+
+      setRating(5);
+      setComment("");
+
+      await loadReviews();
+
+    } catch (error) {
+      console.error(error)
+      toast.error("Failed to submit review");
+    }
   };
 
-  if (!book) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <h2 className="text-2xl font-bold">Loading...</h2>
-      </div>
-    );
-  }
+    if (!book) {
+      return (
+        <div className="flex justify-center items-center h-screen">
+          <h2 className="text-2xl font-bold">Loading...</h2>
+        </div>
+      );
+    }
 
   return (
     <div className="min-h-screen bg-gray-100 p-8">
@@ -84,9 +114,10 @@ function BookDetailsPage() {
         <div className="flex gap-8">
 
           {/* Book Cover */}
+          
           <div>
             <img
-              src={book.cover}
+              src={book.cover || "/noBook.png"}
               alt="Book Cover"
               className="w-64 h-96 object-cover rounded-lg shadow-lg"
             />
@@ -159,45 +190,74 @@ function BookDetailsPage() {
 
         {/* Add Review */}
         <div className="mt-12">
+
           <h2 className="text-3xl font-bold mb-4">
             Add Review
           </h2>
 
-          <input
-            type="text"
-            placeholder="Your Name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="border rounded p-3 w-full mb-4"
-          />
+          
 
-          <select
-            value={rating}
-            onChange={(e) => setRating(Number(e.target.value))}
-            className="border rounded p-3 w-full mb-4"
-          >
-            <option value="5">⭐⭐⭐⭐⭐</option>
-            <option value="4">⭐⭐⭐⭐</option>
-            <option value="3">⭐⭐⭐</option>
-            <option value="2">⭐⭐</option>
-            <option value="1">⭐</option>
-          </select>
+  {/* Rating */}
+  <label className="block font-semibold mb-2">
+    Your Rating
+  </label>
 
-          <textarea
-            rows="5"
-            placeholder="Write your review..."
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-            className="border rounded p-3 w-full"
-          />
+  <div className="flex gap-2 mb-5">
 
-          <button
-            onClick={handleSubmit}
-            className="mt-4 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg"
-          >
-            Submit Review
-          </button>
-        </div>
+    {[1,2,3,4,5].map((star)=>(
+      <button
+        key={star}
+        type="button"
+        onClick={() => setRating(star)}
+        className="text-3xl"
+      >
+        {star <= rating ? "⭐" : "☆"}
+      </button>
+    ))}
+
+  </div>
+
+
+  {/* Comment */}
+  <label className="block font-semibold mb-2">
+    Your Review
+  </label>
+
+  <textarea
+    rows="5"
+    placeholder="Write your review..."
+    value={comment}
+    onChange={(e)=>setComment(e.target.value)}
+    className="
+      w-full
+      border
+      rounded-lg
+      p-3
+      mb-5
+      focus:outline-none
+      focus:ring-2
+      focus:ring-blue-400
+    "
+  />
+
+
+  {/* Submit */}
+  <button
+    onClick={handleSubmit}
+    className="
+      bg-green-600
+      hover:bg-green-700
+      text-white
+      px-8
+      py-3
+      rounded-lg
+      font-semibold
+    "
+  >
+    Submit Review
+  </button>
+
+</div>
 
       </div>
     </div>

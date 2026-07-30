@@ -13,7 +13,14 @@ function CartPage() {
     });
 
     const data = await res.json();
-    setCart(data);
+
+    console.log("CART RESPONSE:",data);
+    if(!res.ok){
+      Console.error(data);
+      setCart([])
+      return;
+    }
+    setCart(Array.isArray(data) ? data  : []);
   };
 
   useEffect(() => {

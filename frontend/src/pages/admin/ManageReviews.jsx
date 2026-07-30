@@ -1,16 +1,27 @@
 import { useEffect, useState } from "react";
+import { toast } from "react-toastify";
 
 function ManageReviews() {
   const [reviews, setReviews] = useState([]);
 
   const loadReviews = async () => {
     try {
+      const token = localStorage.getItem("token");
       // Change this if your backend has another endpoint
-      const res = await fetch("http://localhost:8000/reviews");
+      const res = await fetch("http://localhost:8000/reviews", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.detail || "Failed to load reviews");
+        return;
+      }
       setReviews(data);
     } catch (err) {
       console.error(err);
+      toast.error("Failed to load reviews");
     }
   };
 
@@ -19,15 +30,56 @@ function ManageReviews() {
   }, []);
 
   const deleteReview = async (id) => {
-    if (!window.confirm("Delete this review?")) return;
 
-    await fetch(`http://localhost:8000/reviews/${id}`, {
-      method: "DELETE",
-    });
+  const confirmed = window.confirm(
+    "Delete this review?"
+  );
 
-    loadReviews();
-  };
+  if (!confirmed) return;
 
+
+  try {
+
+    const token = localStorage.getItem("token");
+
+    const response = await fetch(
+      `http://localhost:8000/reviews/${id}`,
+      {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+
+    const data = await response.json();
+
+
+    if (!response.ok) {
+
+      toast.error(data.detail || "Failed to delete review");
+
+      return;
+
+    }
+
+
+    toast.success("Review deleted successfully");
+
+
+    await loadReviews();
+
+
+  } catch (error) {
+
+    console.log(error);
+
+    toast.error("Server error");
+
+  }
+
+};
   return (
     <div className="max-w-6xl mx-auto p-8">
       <h1 className="text-3xl font-bold mb-6">

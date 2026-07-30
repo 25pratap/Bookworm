@@ -30,7 +30,9 @@ function EditBookPage() {
         setPages(data.pages || "");
         setStock(data.stock || "");
       })
-      .catch((error) => console.error(error));
+      .catch((error) => 
+        console.error(error));
+        toast.error("Failed to load book details"); 
   }, [id]);
 
   const handleSubmit = async (e) => {
@@ -61,11 +63,21 @@ function EditBookPage() {
       }
     );
 
-    const data = await response.json();
+   const data = await response.json();
 
-    toast.success(data.message);
+if (!response.ok) {
 
-    navigate("/admin/managebooks");
+  toast.error(data.detail || "Failed to update book");
+
+  return;
+
+}
+
+toast.success(data.message || "Book updated successfully!");
+
+setTimeout(() => {
+  navigate("/admin/managebooks");
+}, 1500);
   };
 
   return (

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import UserSearch from "../../components/UserSearch";
 import UserTable from "../../components/UserTable";
 import ConfirmDeleteModal from "../../components/ConfirmDeleteModal";
-import { toast }from "react-toastify";
+import { toast } from "react-toastify";
 
 function ManageUsers() {
   const [users, setUsers] = useState([]);
@@ -86,17 +86,24 @@ function ManageUsers() {
     setShowDeleteModal(false);
   };
 
+  
   const confirmDelete = async () => {
+    const token=localStorage.getItem("token");
     try {
       const res = await fetch(
         `http://localhost:8000/users/${selectedUser.id}`,
-        { method: "DELETE" }
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || "Delete failed");
 
-      toast.success(data.message);
+      toast.success(data.message || "User deleted successfully");
 
       closeDelete();
       loadUsers();

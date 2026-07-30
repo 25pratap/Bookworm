@@ -25,6 +25,7 @@ const booksPerPage = 5;
 
 //deletebook
 const deleteBook = async (id) => {
+  const token = localStorage.getItem("token");
   try {
     const response = await fetch(`http://localhost:8000/books/${id}`, {
       method: "DELETE",
@@ -95,11 +96,8 @@ const deleteBook = async (id) => {
           <h1 className="text-3xl font-bold text-gray-800">
             Manage Books
           </h1>
-          {successMessage && (
-            <div className="mb-4 rounded-lg bg-green-100 border border-green-400 text-green-700 px-4 py-3">
-                {successMessage}
-            </div>
-)}
+          
+
 
           <p className="text-gray-500 mt-1">
             Total Books: {filteredBooks.length}

@@ -64,7 +64,6 @@ const handleAddToCart = async (bookId) => {
     })
       .then((response) => response.json())
       .then((data) => {
-        console.log("Books from AI:", data);
         setBooks(data);
       })
       .catch((error) => console.error("Error fetching books:", error));

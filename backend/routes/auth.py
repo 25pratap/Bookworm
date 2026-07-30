@@ -17,7 +17,19 @@ router = APIRouter()
 def register(user: UserSignup):
     try:
         print("Received:", user.model_dump())
+        
+         # check empty values
+        if not user.email.strip():
+            raise HTTPException(
+                status_code=400,
+                detail="Email is required"
+            )
 
+        if not user.name.strip():
+            raise HTTPException(
+                status_code=400,
+                detail="Name is required"
+            )
         # check existing user
         existing = (
             supabase.table("profiles")
@@ -66,22 +78,31 @@ def login(user: UserLogin):
             supabase.table("profiles")
             .select("*")
             .eq("email", user.email)
-            .single()
             .execute()
         )
-
+    
+        print("SUPABASE RESULT:", result.data)
+    
         if not result.data:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid email or password"
+                detail="Email not found"
             )
 
-        u = result.data
+        u = result.data[0]
+        print("USER FOUND:",u["email"])
+        print("HASH FROM DB:",u["password"])
 
-        if not verify_password(user.password, u["password"]):
+        password_valid =verify_password(
+             user.password,
+             u["password"]
+        )
+        print("PASSWORD VALID:",password_valid)
+
+        if not password_valid:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid email or password"
+                detail="Password Incorrect"
             )
 
         token = create_token({
@@ -94,6 +115,7 @@ def login(user: UserLogin):
         return {
             "message": "Login successful",
             "token": token,
+            "id": u.get("id"),
             "email": u.get("email"),
             "role": u.get("role"),
             "name": u.get("name"),
@@ -102,6 +124,7 @@ def login(user: UserLogin):
 
     except HTTPException:
         raise
+
     except Exception as e:
         print("LOGIN ERROR:", repr(e))
         raise HTTPException(
@@ -123,7 +146,16 @@ def change_password(data: ChangePassword):
             .single()
             .execute()
         )
-
+    except HTTPException:
+                raise
+    except Exception as e:
+                # .single() raises when no row matches the email
+                print("CHANGE PASSWORD LOOKUP ERROR:", repr(e))
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="User not found"
+                )
+    try:
         if not user.data:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -154,3 +186,4 @@ def change_password(data: ChangePassword):
             status_code=500,
             detail="Password update failed"
         )
+    

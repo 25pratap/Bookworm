@@ -1,36 +1,100 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException,Depends
+from fastapi.security import HTTPAuthorizationCredentials
 
 from database.supabase_client import supabase
 from models import Review
+from utils.security import get_current_user,security
 
 router = APIRouter()
+#Get Reviews by book
 
-
+    
 @router.get("/reviews/{book_id}")
 def get_reviews(book_id: int):
-    result = supabase.table("reviews").select("*").eq("book_id", book_id).execute()
-    return result.data
+    try:
+        result = (
+            supabase
+            .table("reviews")
+            .select("*")
+            .eq("book_id", book_id)
+            .execute()
+        )
 
+        print(result)
 
+        return result.data
+
+    except Exception as e:
+        print("GET REVIEW FROM ERROR:", e)
+        raise HTTPException(
+            status_code=500, 
+            detail="Failed to fetch reviews"
+        )
+    #ADD REVIEW
 @router.post("/reviews")
-def add_review(review: Review):
-    # Validate rating range
-    if not (1 <= review.rating <= 5):
-        raise HTTPException(status_code=400, detail="Rating must be between 1 and 5")
+def add_review(
+    review: Review,
+    credentials:HTTPAuthorizationCredentials = Depends(security)
+    ):
+        try:
+            user = get_current_user(credentials)
 
-    result = supabase.table("reviews").insert(review.model_dump()).execute()
+            print("USER FROM TOKEN:", user)
 
-    if not result.data:
-        raise HTTPException(status_code=500, detail="Failed to add review")
+            # Check if user already reviewed this book
+            existing = (
+                supabase
+                .table("reviews")
+                .select("*")
+                .eq("book_id", review.book_id)
+                .eq("user_email", user["email"])
+                .execute()
+            )
 
-    return {"message": "Review added successfully"}
-@router.get("/reviews")
-def get_all_reviews():
-    result = supabase.table("reviews").select("*").execute()
-    return result.data
+
+            if existing.data:
+                raise HTTPException(
+                    status_code=400,
+                    detail="You already reviewed this book"
+                )
 
 
+            result =supabase.table("reviews").insert({
+                "book_id":review.book_id,
+                "user_email":user["email"],
+                "name":user["name"],
+                "rating":review.rating,
+                "comment":review.comment
+            }).execute()
+
+            print("INSERT RESULT:", result.data)
+
+            return {
+                "message": "Review added successfully",
+                "data": result.data
+            }
+        except Exception as e:
+            print("ADD REVIEW ERROR:", e)
+            raise HTTPException(
+                status_code=500,
+                detail=str(e)
+            )
+
+#Delete review
 @router.delete("/reviews/{review_id}")
 def delete_review(review_id: int):
-    supabase.table("reviews").delete().eq("id", review_id).execute()
-    return {"message": "Review deleted successfully"}
+    try:
+        supabase.table("reviews")\
+        .delete()\
+        .eq("id", review_id)\
+        .execute()
+
+        return {
+            "message": "Review deleted successfully"
+            }
+    except Exception as e:
+        print("DELETE REVIEW ERROR:", e)
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to delete review"
+        )

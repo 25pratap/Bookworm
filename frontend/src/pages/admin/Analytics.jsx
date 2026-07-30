@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { toast } from "react-toastify";
 
 function Analytics() {
   const [stats, setStats] = useState({
@@ -7,17 +8,48 @@ function Analytics() {
     reviews: 0,
   });
 
-  useEffect(() => {
-    fetch("http://localhost:8000/admin/stats", {
-      headers: {
-        Authorization:
-          "Bearer " + localStorage.getItem("token"),
-      },
-    })
-      .then((res) => res.json())
-      .then((data) => setStats(data))
-      .catch((err) => console.log(err));
-  }, []);
+ useEffect(() => {
+
+  const loadStats = async () => {
+
+    try {
+
+      const response = await fetch(
+        "http://localhost:8000/admin/stats",
+        {
+          headers: {
+            Authorization:
+              "Bearer " + localStorage.getItem("token"),
+          },
+        }
+      );
+
+
+      const data = await response.json();
+
+
+      if (!response.ok) {
+        toast.error(data.detail || "Failed to load analytics");
+        return;
+      }
+
+
+      setStats(data);
+
+    } catch (err) {
+
+      console.log(err);
+
+      toast.error("Server error while loading analytics");
+
+    }
+
+  };
+
+
+  loadStats();
+
+}, []);
 
   return (
     <div className="max-w-5xl mx-auto p-8">

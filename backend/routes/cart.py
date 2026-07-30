@@ -17,6 +17,7 @@ def add_to_cart(
     existing = (
         supabase.table("cart")
         .select("*")
+        .eq("user_id", user["id"])
         .eq("book_id", cart.book_id)
         .execute()
     )
