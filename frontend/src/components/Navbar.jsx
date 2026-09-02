@@ -189,12 +189,24 @@ function Navbar() {
                     </div>
 
                     <NavLink
+                      to="/preferences"
+                      onClick={()=>setOpenMenu(false)}
+                      className="
+                      block px-4 py-3
+                      hover:bg-gray-100 text-gray-700
+                      border-b border-gray-100
+                      "
+                    >
+                      ⭐ Reading Preferences
+                    </NavLink>
+
+                    <NavLink
                       to="/change-password"
                       onClick={()=>setOpenMenu(false)}
 
                       className="
                       block px-4 py-3
-                      hover:bg-gray-100
+                      hover:bg-gray-100 text-gray-700
                       "
                     >
                       🔒 Change Password

@@ -128,3 +128,58 @@ def delete_book(
     supabase.table("books").delete().eq("id", book_id).execute()
 
     return {"message": "Book deleted successfully"}
+
+@router.get("/admin/orders")
+def get_all_orders(admin=Depends(require_admin)):
+    try:
+        orders_res = (
+            supabase
+            .table("orders")
+            .select("*")
+            .order("id", desc=True)
+            .execute()
+        )
+        orders = orders_res.data or []
+        if orders:
+            book_ids = list(set([int(o["book_id"]) for o in orders if o.get("book_id")]))
+            if book_ids:
+                books_res = (
+                    supabase
+                    .table("books")
+                    .select("id, title, author, genre, price, cover")
+                    .in_("id", book_ids)
+                    .execute()
+                )
+                books_map = {b["id"]: b for b in (books_res.data or [])}
+                for o in orders:
+                    o["books"] = books_map.get(int(o.get("book_id", 0)))
+        return orders
+    except Exception as e:
+        print("ADMIN GET ORDERS ERROR:", e)
+        raise HTTPException(status_code=500, detail="Failed to fetch orders")
+
+@router.put("/admin/orders/{order_id}/status")
+def update_order_status(
+    order_id: int,
+    payload: dict,
+    admin=Depends(require_admin)
+):
+    status = payload.get("status")
+    if not status:
+        raise HTTPException(status_code=400, detail="Status is required")
+
+    result = (
+        supabase
+        .table("orders")
+        .update({"status": status})
+        .eq("id", order_id)
+        .execute()
+    )
+
+    if not result.data:
+        raise HTTPException(status_code=404, detail="Order not found")
+
+    return {
+        "message": f"Order status updated to {status}",
+        "order": result.data[0]
+    }

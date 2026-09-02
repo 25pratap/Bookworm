@@ -10,20 +10,15 @@ function LoginPage() {
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [showPassword ,setShowPassword] = useState(false);
-    const [showConfirmPassword,setShowConfirmPassword] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState("");
-    const [success, setSuccess] = useState("");
 
     const handleLogin = async (e) => {
         e.preventDefault();
         setLoading(true);
-        setError("");
-        setSuccess("");
 
         try {
-            const response = await fetch("http://127.0.0.1:8000/login", {
+            const response = await fetch("http://localhost:8000/login", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -136,7 +131,7 @@ function LoginPage() {
                 <p className="text-center mt-4 text-gray-600">
                     Don't have an account?{" "}
                     <Link
-                        to="/signup"
+                        to="/register"
                         className="text-blue-600 font-semibold hover:underline"
                     >
                         Sign Up

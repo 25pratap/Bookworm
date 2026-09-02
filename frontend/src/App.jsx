@@ -23,6 +23,7 @@ import OrdersPage from "./pages/OrdersPage";
 import RecommendationsPage from "./pages/RecommendationsPage";
 
 import ManageReviews from "./pages/admin/ManageReviews";
+import ManageOrders from "./pages/admin/ManageOrders";
 import Analytics from "./pages/admin/Analytics";
 
 import CheckoutPage from "./pages/CheckoutPage";
@@ -189,6 +190,15 @@ function App() {
           element={
             <ProtectedRoute role="admin">
               <ManageReviews />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/orders"
+          element={
+            <ProtectedRoute role="admin">
+              <ManageOrders />
             </ProtectedRoute>
           }
         />

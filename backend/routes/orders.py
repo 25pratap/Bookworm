@@ -115,6 +115,34 @@ def update_payment(
         "message": "Payment successful",
         "payment_method": payment_method
     }
+@router.put("/orders/{order_id}/cancel")
+def cancel_specific_order(
+    order_id: int,
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    user = get_current_user(credentials)
+
+    result = (
+        supabase
+        .table("orders")
+        .update({
+            "status": "Cancelled"
+        })
+        .eq("id", order_id)
+        .eq("user_email", user["email"])
+        .execute()
+    )
+
+    if not result.data:
+        raise HTTPException(
+            status_code=404,
+            detail="Order not found"
+        )
+
+    return {
+        "message": "Order cancelled successfully"
+    }
+
 @router.put("/orders/cancel")
 def cancel_order(
     credentials: HTTPAuthorizationCredentials = Depends(security)

@@ -143,28 +143,45 @@ function AdminDashboard() {
 
       {/* Management */}
 
-      <div className="grid md:grid-cols-3 gap-8 mb-10">
+      <div className="grid md:grid-cols-3 lg:grid-cols-5 gap-6 mb-10">
 
         <DashboardCard
           title="Manage Books"
           description="View, add, edit and delete books."
           icon="📚"
-          color="bg-gradient-to-r from-blue-600 to cyan-500"
+          color="bg-gradient-to-r from-blue-600 to-cyan-500"
           to="/admin/managebooks"
         />
 
         <DashboardCard
+          title="Manage Orders"
+          description="Track deliveries & update status."
+          icon="📦"
+          color="bg-gradient-to-r from-emerald-600 to-teal-500"
+          to="/admin/orders"
+        />
+
+        <DashboardCard
           title="Manage Users"
-          description="Search, edit and delete users."
+          description="Search, view and manage users."
           icon="👥"
           color="bg-gradient-to-r from-purple-600 to-pink-500"
           to="/admin/manageusers"
         />
+
+        <DashboardCard
+          title="Manage Reviews"
+          description="Moderate reader feedback."
+          icon="⭐"
+          color="bg-gradient-to-r from-amber-500 to-orange-500"
+          to="/admin/reviews"
+        />
+
         <DashboardCard
           title="Analytics"
-          description="View ratings and system statistics."
+          description="View store ratings & metrics."
           icon="📊"
-          color="bg-gradient-to-r from-orange-500 to-red-500"
+          color="bg-gradient-to-r from-rose-500 to-red-500"
           to="/admin/analytics"
         />
 

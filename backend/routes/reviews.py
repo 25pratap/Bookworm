@@ -8,9 +8,27 @@ from models import Review
 from utils.security import get_current_user,security
 
 router = APIRouter()
-#Get Reviews by book
 
-    
+# Get all reviews (for Admin / general)
+@router.get("/reviews")
+def get_all_reviews():
+    try:
+        result = (
+            supabase
+            .table("reviews")
+            .select("*")
+            .order("id", desc=True)
+            .execute()
+        )
+        return result.data or []
+    except Exception as e:
+        print("GET ALL REVIEWS ERROR:", e)
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to fetch reviews"
+        )
+
+# Get Reviews by book
 @router.get("/reviews/{book_id}")
 def get_reviews(book_id: int):
     try:
