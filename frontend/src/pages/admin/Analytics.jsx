@@ -6,90 +6,168 @@ function Analytics() {
     books: 0,
     users: 0,
     reviews: 0,
+    average_rating: 0,
+    rating_distribution: {
+      "1": 0,
+      "2": 0,
+      "3": 0,
+      "4": 0,
+      "5": 0,
+    },
   });
 
- useEffect(() => {
+  useEffect(() => {
+    const loadStats = async () => {
+      try {
+        const response = await fetch(
+          "http://localhost:8000/admin/stats",
+          {
+            headers: {
+              Authorization:
+                "Bearer " + localStorage.getItem("token"),
+            },
+          }
+        );
 
-  const loadStats = async () => {
+        const data = await response.json();
 
-    try {
-
-      const response = await fetch(
-        "http://localhost:8000/admin/stats",
-        {
-          headers: {
-            Authorization:
-              "Bearer " + localStorage.getItem("token"),
-          },
+        if (!response.ok) {
+          toast.error(data.detail || "Failed to load analytics");
+          return;
         }
-      );
 
-
-      const data = await response.json();
-
-
-      if (!response.ok) {
-        toast.error(data.detail || "Failed to load analytics");
-        return;
+        setStats(data);
+      } catch (err) {
+        console.error(err);
+        toast.error("Server error while loading analytics");
       }
+    };
 
-
-      setStats(data);
-
-    } catch (err) {
-
-      console.log(err);
-
-      toast.error("Server error while loading analytics");
-
-    }
-
-  };
-
-
-  loadStats();
-
-}, []);
+    loadStats();
+  }, []);
 
   return (
-    <div className="max-w-5xl mx-auto p-8">
-      <h1 className="text-3xl font-bold mb-8">
-        Analytics Dashboard
-      </h1>
+    <div className="min-h-screen bg-gray-100 p-8">
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="max-w-6xl mx-auto">
 
-        <div className="bg-blue-500 text-white rounded-lg p-6 shadow">
-          <h2 className="text-xl font-semibold">
-            Total Books
-          </h2>
+        {/* HEADER */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-800">
+            Analytics Dashboard
+          </h1>
 
-          <p className="text-4xl mt-4">
-            {stats.books}
+          <p className="text-gray-500 mt-1">
+            Overview of your BookWorm system
           </p>
         </div>
 
-        <div className="bg-green-500 text-white rounded-lg p-6 shadow">
-          <h2 className="text-xl font-semibold">
-            Total Users
-          </h2>
+        {/* STAT CARDS */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
 
-          <p className="text-4xl mt-4">
-            {stats.users}
-          </p>
+          {/* BOOKS */}
+          <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-blue-500">
+            <p className="text-gray-500 font-medium">
+              Total Books
+            </p>
+
+            <p className="text-4xl font-bold text-blue-600 mt-3">
+              {stats.books}
+            </p>
+          </div>
+
+          {/* USERS */}
+          <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-green-500">
+            <p className="text-gray-500 font-medium">
+              Total Users
+            </p>
+
+            <p className="text-4xl font-bold text-green-600 mt-3">
+              {stats.users}
+            </p>
+          </div>
+
+          {/* REVIEWS */}
+          <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-yellow-500">
+            <p className="text-gray-500 font-medium">
+              Total Reviews
+            </p>
+
+            <p className="text-4xl font-bold text-yellow-600 mt-3">
+              {stats.reviews}
+            </p>
+          </div>
+
+          {/* AVERAGE RATING */}
+          <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-purple-500">
+            <p className="text-gray-500 font-medium">
+              Average Rating
+            </p>
+
+            <p className="text-4xl font-bold text-purple-600 mt-3">
+              {stats.average_rating}
+              <span className="text-2xl ml-1">⭐</span>
+            </p>
+          </div>
+
         </div>
 
-        <div className="bg-yellow-500 text-white rounded-lg p-6 shadow">
-          <h2 className="text-xl font-semibold">
-            Total Reviews
+        {/* RATING DISTRIBUTION */}
+        <div className="bg-white rounded-xl shadow-md p-6 mt-8">
+
+          <h2 className="text-2xl font-bold text-gray-800 mb-6">
+            Rating Distribution
           </h2>
 
-          <p className="text-4xl mt-4">
-            {stats.reviews}
-          </p>
+          <div className="space-y-4">
+
+            {[5, 4, 3, 2, 1].map((rating) => {
+              const count =
+                stats.rating_distribution?.[rating] || 0;
+
+              const percentage =
+                stats.reviews > 0
+                  ? (count / stats.reviews) * 100
+                  : 0;
+
+              return (
+                <div
+                  key={rating}
+                  className="flex items-center gap-4"
+                >
+
+                  {/* RATING */}
+                  <div className="w-16 font-semibold text-gray-700">
+                    {rating} ⭐
+                  </div>
+
+                  {/* BAR */}
+                  <div className="flex-1 bg-gray-200 rounded-full h-4 overflow-hidden">
+
+                    <div
+                      className="bg-yellow-400 h-full rounded-full transition-all duration-500"
+                      style={{
+                        width: `${percentage}%`,
+                      }}
+                    />
+
+                  </div>
+
+                  {/* COUNT */}
+                  <div className="w-20 text-right text-gray-600">
+                    {count} review{count !== 1 ? "s" : ""}
+                  </div>
+
+                </div>
+              );
+            })}
+
+          </div>
+
         </div>
 
       </div>
+
     </div>
   );
 }

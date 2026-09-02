@@ -78,11 +78,9 @@ return (
 
               </div>
 
-              {/* SCORE BADGE */}
-              <div className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-semibold">
-                {book.similarity?.toFixed(2) ?? "0.00"}
+              <div className="text-yellow-500 font-semibold">
+                ⭐ {book.avg_rating?.toFixed(1) ?? "0.0"} / 5
               </div>
-
             </div>
 
           </div>

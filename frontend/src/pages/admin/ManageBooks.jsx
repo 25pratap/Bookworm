@@ -11,7 +11,7 @@ function ManageBooks() {
   const [selectedBookId, setSelectedBookId] = useState(null);
   const [successMessage, setSuccessMessage] = useState("");
 
-const booksPerPage = 5;
+  const [booksPerPage, setBooksPerPage] = useState(10);
 
   const loadBooks = async () => {
     const res = await fetch("http://localhost:8000/books");
@@ -72,7 +72,11 @@ const deleteBook = async (id) => {
       book.author.toLowerCase().includes(search.toLowerCase());
 
     const matchesGenre =
-      genreFilter === "All" || book.genre === genreFilter;
+      genreFilter === "All" || 
+      (book.genre || "").trim().toLowerCase() ===
+       genreFilter.toLowerCase();
+
+
 
     return matchesSearch && matchesGenre;
   });
@@ -127,7 +131,7 @@ const deleteBook = async (id) => {
     }}
     className="w-full border rounded-lg px-4 py-3 text-lg"
   />
-
+{/* Genre Filter */}
   <select
     value={genreFilter}
     onChange={(e) => {
@@ -243,53 +247,84 @@ const deleteBook = async (id) => {
           </tbody>
 
         </table>
-             {/* Pagination */}
-      <div className="flex flex-col md:flex-row justify-between items-center px-6 py-5 border-t">
+      {/* Pagination */}
+      <div className="flex flex-col md:flex-row justify-between items-center px-6 py-5 border-t gap-4">
 
-        <p className="text-gray-600 mb-3 md:mb-0">
-            Showing {filteredBooks.length === 0 ? 0 : indexOfFirstBook + 1} -
-            {Math.min(indexOfLastBook, filteredBooks.length)} of {filteredBooks.length} books
-        </p>
+        {/* LEFT SIDE */}
+        <div className="flex items-center gap-4">
 
+          {/* Showing count */}
+          <p className="text-gray-600">
+            Showing{" "}
+            {filteredBooks.length === 0 ? 0 : indexOfFirstBook + 1}
+            {" - "}
+            {Math.min(indexOfLastBook, filteredBooks.length)}
+            {" of "}
+            {filteredBooks.length} books
+          </p>
+
+          {/* Books per page */}
+          <select
+            value={booksPerPage}
+            onChange={(e) => {
+              setBooksPerPage(Number(e.target.value));
+              setCurrentPage(1);
+            }}
+            className="border rounded-lg px-3 py-2 bg-white"
+          >
+            <option value={5}>5</option>
+            <option value={10}>10</option>
+            <option value={15}>15</option>
+            <option value={20}>20</option>
+            <option value={50}>50</option>
+          </select>
+
+        </div>
+
+
+        {/* RIGHT SIDE */}
         <div className="flex items-center gap-2">
 
-            <button
+          {/* Previous */}
+          <button
             onClick={() => setCurrentPage((prev) => prev - 1)}
             disabled={currentPage === 1}
             className="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 disabled:opacity-50"
-            >
+          >
             Previous
-            </button>
+          </button>
 
-            {[...Array(totalPages)].map((_, index) => (
+          {/* Page numbers */}
+          {[...Array(totalPages)].map((_, index) => (
             <button
-                key={index}
-                onClick={() => setCurrentPage(index + 1)}
-                className={`w-10 h-10 rounded-lg font-medium transition ${
+              key={index}
+              onClick={() => setCurrentPage(index + 1)}
+              className={`w-10 h-10 rounded-lg font-medium transition ${
                 currentPage === index + 1
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-200 hover:bg-gray-300"
-                }`}
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-200 hover:bg-gray-300"
+              }`}
             >
-                {index + 1}
+              {index + 1}
             </button>
-            ))}
+          ))}
 
-            <button
+          {/* Next */}
+          <button
             onClick={() => setCurrentPage((prev) => prev + 1)}
             disabled={currentPage === totalPages || totalPages === 0}
             className="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 disabled:opacity-50"
-            >
+          >
             Next
-            </button>
+          </button>
 
         </div>
 
-        </div>
+      </div>
 
-        </div>
+     </div>
         
-        {showDeleteModal && (
+         {showDeleteModal && (
             <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
 
                 <div className="bg-white rounded-xl shadow-xl w-96 p-6">

@@ -10,7 +10,7 @@ class UserSignup(BaseModel):
     role: str = "user"
     age: Optional[int] = None
     gender: Optional[str] = None
-    favorite_genres: Optional[List[str]] = []   
+    favorite_genres: Optional[List[str]] = []  
 
 class UserLogin(BaseModel):
     email: EmailStr
@@ -32,7 +32,7 @@ class Book(BaseModel):
 #Review model
 class Review(BaseModel):
     book_id: int
-    rating: int
+    rating: float = Field(..., ge=1, le=5)
     comment: str
 
 #Preferences

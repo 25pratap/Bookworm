@@ -1,25 +1,12 @@
-import { createContext, useState, useEffect } from "react";
+import { createContext, useState, } from "react";
 
 export const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
-  const [token, setToken] = useState(null);
-  const [role, setRole] = useState(null);
+  const [token, setToken] = useState(() => localStorage.getItem("token"));
+  const [role, setRole] = useState(() => localStorage.getItem("role"));
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const savedToken = localStorage.getItem("token");
-    const savedRole = localStorage.getItem("role")
-    
-    if (savedToken) {
-      setToken(savedToken);
-    }
-    if(savedRole){
-      setRole(savedRole);
-    }
-
-    setLoading(false);
-  }, []);
 
   const login = (data) => {
     localStorage.setItem("token", data.token);
@@ -47,7 +34,7 @@ export function AuthProvider({ children }) {
         role, 
         login,
         logout, 
-        loading 
+        loading,
         }}
       >
       {children}

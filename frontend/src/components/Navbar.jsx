@@ -4,9 +4,9 @@ import { AuthContext } from "../context/AuthContext";
 
 function Navbar() {
   const navigate = useNavigate();
-  const { token, logout } = useContext(AuthContext);
+  const { token, role, logout } = useContext(AuthContext);
+  const email = localStorage.getItem("email");
 
-  const role = localStorage.getItem("role");
   const [search, setSearch] = useState("");
   const [openMenu, setOpenMenu] = useState(false);
 
@@ -78,16 +78,16 @@ function Navbar() {
                 Cart
               </NavLink>
 
-              <Link to="/orders">
+               <NavLink to="/orders" className={navStyle}>
                 My Orders
-              </Link>
+              </NavLink>
 
 
               {role === "admin" && (
-                <NavLink to="/admin" className={navStyle}>
+                <NavLink to="/admin/dashboard" className={navStyle}>
                   Admin
                 </NavLink>
-              )}
+              ) }
 
 
 
@@ -176,6 +176,17 @@ function Navbar() {
                   z-50
                   ">
 
+                    
+                    {/* USER EMAIL */}
+                    <div className="px-4 py-3 border-b border-gray-200 bg-gray-50">
+                      <p className="text-xs text-gray-500">
+                        Logged in as
+                      </p>
+
+                      <p className="font-semibold text-gray-800 truncate">
+                        {email || "User"}
+                      </p>
+                    </div>
 
                     <NavLink
                       to="/change-password"

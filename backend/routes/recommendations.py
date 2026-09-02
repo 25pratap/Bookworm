@@ -1,11 +1,18 @@
 from fastapi import APIRouter, HTTPException
+from numpy import select
 from database.supabase_client import supabase
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.preprocessing import MinMaxScaler
+
 router = APIRouter()
 
+
+# -----------------------------------------------------------------------
+# GET /recommend/{email}
+# "Recommended For You" — used on the /books page
+# -----------------------------------------------------------------------
 @router.get("/recommend/{email}")
 def initial_recommendations(email: str):
 
@@ -22,20 +29,13 @@ def initial_recommendations(email: str):
         profile = None
 
     if not profile or not profile.data:
-        raise HTTPException(
-            status_code=404,
-            detail="Profile not found"
-        )
+        raise HTTPException(status_code=404, detail="Profile not found")
 
     favorite_genres = profile.data.get("favorite_genres", [])
     user_id = profile.data["id"]
 
     if not favorite_genres:
-        raise HTTPException(
-            status_code=404,
-            detail="No favorite genres selected"
-        )
-
+        raise HTTPException(status_code=404, detail="No favorite genres selected")
 
     # Get reviewed books
     reviews = (
@@ -44,15 +44,7 @@ def initial_recommendations(email: str):
         .eq("user_email", email)
         .execute()
     )
-
-    reviewed_books = []
-
-    if reviews.data:
-        reviewed_books = [
-            int(r["book_id"])
-            for r in reviews.data
-        ]
-
+    reviewed_books = [int(r["book_id"]) for r in reviews.data] if reviews.data else []
 
     # Get cart books
     cart = (
@@ -61,26 +53,18 @@ def initial_recommendations(email: str):
         .eq("user_id", user_id)
         .execute()
     )
+    cart_books = [int(c["book_id"]) for c in cart.data] if cart.data else []
 
-    cart_books = []
-
-    if cart.data:
-        cart_books = [
-            int(c["book_id"])
-            for c in cart.data
-        ]
-
-
-    # Get books
+    # Get all books
     books = (
-        supabase.table("books")
-        .select("*")
+       supabase
+        .table("books")
+        .select("id, title, author, genre")
+        .in_("genre", favorite_genres)
         .execute()
     )
 
-
     recommendations = []
-
 
     for book in books.data:
 
@@ -88,25 +72,23 @@ def initial_recommendations(email: str):
         if book["genre"] not in favorite_genres:
             continue
 
-
-        # Skip already reviewed books
         if int(book["id"]) in reviewed_books:
             continue
 
-
-        # Skip cart books
         if int(book["id"]) in cart_books:
             continue
 
+        if any(r["id"] == book["id"] for r in recommendations):
+            continue
 
         recommendations.append({
             "id": book["id"],
             "title": book["title"],
             "author": book["author"],
             "genre": book["genre"],
-            "similarity": 0.5
         })
 
+    # Fallback: pad out with popular books if not enough genre matches
     if len(recommendations) < 5:
 
         popular_books = (
@@ -125,118 +107,127 @@ def initial_recommendations(email: str):
             if int(book["id"]) in cart_books:
                 continue
 
-            # Skip books already recommended
             if any(r["id"] == book["id"] for r in recommendations):
                 continue
-
 
             recommendations.append({
                 "id": book["id"],
                 "title": book["title"],
                 "author": book["author"],
                 "genre": book["genre"],
-                "similarity": 1.0
             })
 
-    return {
-        "recommendations": recommendations[:10]
-    }
+    return {"recommendations": recommendations[:10]}
 
+
+# -----------------------------------------------------------------------
+# GET /recommend/{email}/{title}
+# "Recommend Similar Books" — used on the Book Details page
+# -----------------------------------------------------------------------
 @router.get("/recommend/{email}/{title}")
 def recommend_books(email: str, title: str):
 
     # Fetch all books
     result = supabase.table("books").select("*").execute()
-
     if not result.data:
         raise HTTPException(status_code=404, detail="No books found")
 
     df = pd.DataFrame(result.data)
 
     # Fetch all reviews
-    reviews_result = supabase.table("reviews").select("*").execute()
+    reviews_result =(
+         supabase
+         .table("reviews")
+         .select("id,user_email,book_id,rating").execute()
+    )
+    print("REVIEWS RESPONSE:", reviews_result)
+    print("REVIEWS DATA:", reviews_result.data)
 
-    reviews_df = pd.DataFrame(reviews_result.data)
+    reviews_df = pd.DataFrame(reviews_result.data or [])
+    print("REVIEWS DF:")
+    print(reviews_df)
 
     # Fetch cart
-    cart_result = (
-        supabase.table("cart")
-        .select("*")
-        .execute()
-    )
-
+    cart_result = supabase.table("cart").select("*").execute()
     cart_df = pd.DataFrame(cart_result.data)
-
-
-    if reviews_df.empty:
-        reviews_df = pd.DataFrame(
-            columns=["user_email", "book_id", "rating"]
-        )   
-    if cart_df.empty:
-        cart_df = pd.DataFrame(
-            columns=["user_id", "book_id", "quantity"]
+    reviews_df["book_id"] = pd.to_numeric(
+            reviews_df["book_id"], errors="coerce"
         )
+
+    reviews_df["rating"] = pd.to_numeric(
+            reviews_df["rating"], errors="coerce"
+        )
+    reviews_df = reviews_df.dropna(
+            subset=["book_id", "rating"]
+        )
+
+    reviews_df["book_id"] = reviews_df["book_id"].astype(int)
+
+    df["id"] = pd.to_numeric(
+            df["id"], errors="coerce"
+        )
+
+    df["id"] = df["id"].astype(int)
+    if reviews_df.empty:
+        reviews_df = pd.DataFrame(columns=["user_email", "book_id", "rating"])
+    if cart_df.empty:
+        cart_df = pd.DataFrame(columns=["user_id", "book_id", "quantity"])
 
     rating_avg = (
         reviews_df.groupby("book_id")["rating"]
         .mean()
         .reset_index(name="avg_rating")
     )
-
     rating_count = (
         reviews_df.groupby("book_id")["rating"]
         .count()
         .reset_index(name="review_count")
     )
-
     cart_count = (
         cart_df.groupby("book_id")
         .size()
         .reset_index(name="cart_count")
     )
 
-    df = df.merge(
-        rating_avg,
-        left_on="id",
-        right_on="book_id",
-        how="left"
-    ).drop(columns=["book_id"])
+    df = df.merge(rating_avg, left_on="id", right_on="book_id", how="left").drop(columns=["book_id"])
+    df = df.merge(rating_count, left_on="id", right_on="book_id", how="left").drop(columns=["book_id"])
+    df = df.merge(cart_count, left_on="id", right_on="book_id", how="left").drop(columns=["book_id"])
 
-    df = df.merge(
-        rating_count,
-        left_on="id",
-        right_on="book_id",
-        how="left"
-    ).drop(columns=["book_id"])
-
-    df = df.merge(
-        cart_count,
-        left_on="id",
-        right_on="book_id",
-        how="left"
-    ).drop(columns=["book_id"])
+    print(
+    df[df["title"].isin([
+        "Rich Dad Poor Dad",
+        "Zero to One",
+        "Start with Why",
+        "The Psychology of Money",
+        "Built to Last"
+    ])][
+        ["id", "title", "avg_rating", "review_count"]
+    ]
+)
+    print(
+    reviews_df[
+        reviews_df["book_id"].isin([37, 38, 39, 40, 41])
+    ][
+        ["user_email", "book_id", "rating"]
+    ]
+)
 
     df["avg_rating"] = df["avg_rating"].fillna(0)
     df["review_count"] = df["review_count"].fillna(0)
     df["cart_count"] = df["cart_count"].fillna(0)
+    df["actual_avg_rating"] = df["avg_rating"]
 
     scaler = MinMaxScaler()
+    df[["normalized_avg_rating", "normalized_review_count", "normalized_cart_count"]] = scaler.fit_transform(
+        df[["avg_rating", "review_count", "cart_count"]]
+    )
 
-    df[
-        ["avg_rating", "review_count", "cart_count"]
-        ] = scaler.fit_transform(
-            df[
-                ["avg_rating", "review_count", "cart_count"]
-            ]
-        )
-    # Make sure these columns exist
-    required_columns = ["title", "author", "genre", "description"]
-
-    for col in required_columns:
+    # Make sure required text columns exist
+    for col in ["title", "author", "genre", "description"]:
         if col not in df.columns:
             df[col] = ""
 
-    # Combine text
+    # Combine text for TF-IDF
     df["content"] = (
         df["title"].fillna("") + " " +
         df["author"].fillna("") + " " +
@@ -244,13 +235,11 @@ def recommend_books(email: str, title: str):
         df["description"].fillna("")
     )
 
-    # TF-IDF
     vectorizer = TfidfVectorizer(stop_words="english")
-
     tfidf_matrix = vectorizer.fit_transform(df["content"])
-
-    # Cosine Similarity
     similarity = cosine_similarity(tfidf_matrix)
+
+    # Get user profile
     try:
         profile = (
             supabase.table("profiles")
@@ -260,283 +249,306 @@ def recommend_books(email: str, title: str):
             .execute()
         )
     except Exception:
-         profile =  None
-
-    favorite_genres = []
-    user_id = None
-    similar_users = pd.Series(dtype=float)
-    cart_similarity_df = pd.DataFrame()
-    
+        profile = None
 
     if not profile or not profile.data:
-        raise HTTPException(
-        status_code=404,
-        detail="Profile not found"
-    )
+        raise HTTPException(status_code=404, detail="Profile not found")
+
     favorite_genres = profile.data.get("favorite_genres", [])
-    user_id=profile.data["id"]
-        
+    user_id = profile.data["id"]
 
-    user_reviews = reviews_df[
-        reviews_df["user_email"] == email
-        ]
-    reviewed_books=user_reviews["book_id"].tolist()
+    user_reviews = reviews_df[reviews_df["user_email"] == email]
+    reviewed_books = [int(b) for b in user_reviews["book_id"].tolist()]
 
-    user_cart = cart_df[
-            cart_df["user_id"] == user_id
-        ]
-    cart_books=user_cart["book_id"].tolist()    
-               
-    # Find selected book
+    user_cart = cart_df[cart_df["user_id"] == user_id]
+    cart_books = [int(b) for b in user_cart["book_id"].tolist()]
+
+    
+
+    # If user has no history at all, just return popularity-based picks
     if user_reviews.empty and user_cart.empty:
 
-            df["popularity"] = (
-                df["avg_rating"] * 0.6 +
-                df["review_count"] * 0.2 +
-                df["cart_count"] * 0.2
-            )
+        df["popularity"] = (
+            df["normalized_avg_rating"] * 0.6 +
+            df["normalized_review_count"] * 0.2 +
+            df["normalized_cart_count"] * 0.2
+        )
 
-            if favorite_genres:
-                df = df[df["genre"].isin(favorite_genres)]
+        if favorite_genres:
+            df = df[df["genre"].isin(favorite_genres)]
 
-            df = df.sort_values(
-                "popularity",
-                ascending=False
-            )
+        df = df.sort_values("popularity", ascending=False)
 
-            return {
-                "recommendations": df[
-                    ["id","title","author","genre"]
-                ].head(5).to_dict("records")
-            }
-    
-        # -----------------------------
-        # Collaborative Filtering
-        # -----------------------------
+        return {
+            "recommendations": df[["id", "title", "author", "genre"]].head(5).to_dict("records")
+        }
+
+    # -----------------------------
+    # Collaborative Filtering (reviews)
+    # -----------------------------
+    review_similar_users = pd.Series(dtype=float)
 
     if not reviews_df.empty:
 
-            rating_matrix = reviews_df.pivot_table(
-                index="user_email",
-                columns="book_id",
-                values="rating"
+        rating_matrix = reviews_df.pivot_table(
+            index="user_email",
+            columns="book_id",
+            values="rating"
+        )
+
+        user_similarity = cosine_similarity(rating_matrix.fillna(0))
+
+        review_similarity_df = pd.DataFrame(
+            user_similarity,
+            index=rating_matrix.index,
+            columns=rating_matrix.index
+        )
+
+        if email in review_similarity_df.index:
+            review_similar_users = (
+                review_similarity_df[email]
+                .sort_values(ascending=False)
+                .drop(email)
             )
+            print("==========  REVIEW SIMILAR USERS ==========")
+            print(review_similar_users)
+            print("===================================")
 
-            user_similarity = cosine_similarity(
-                rating_matrix.fillna(0)
-            )
+    # -----------------------------
+    # Cart Collaborative Filtering
+    # -----------------------------
 
-            similarity_df = pd.DataFrame(
-                user_similarity,
-                index=rating_matrix.index,
-                columns=rating_matrix.index
-            )
-
-            if email in similarity_df.index:
-
-                similar_users = (
-                    similarity_df[email]
-                    .sort_values(ascending=False)
-                    .drop(email)
-                )
-
-    else:
-
-            similar_users = pd.Series(dtype=float)
-
-        # -----------------------------
-        # Cart Collaborative Filtering
-        # -----------------------------
+    cart_similarity_df = pd.DataFrame()
+    cart_matrix=pd.DataFrame()
 
     if not cart_df.empty:
 
-                cart_matrix = cart_df.pivot_table(
-                    index="user_id",
-                    columns="book_id",
-                    aggfunc="size",
-                    fill_value=0
+        cart_matrix = cart_df.pivot_table(
+            index="user_id",
+            columns="book_id",
+            aggfunc="size",
+            fill_value=0
+        )
+        if  len(cart_matrix) > 2:
+
+            cart_similarity = cosine_similarity(cart_matrix)
+
+            cart_similarity_df = pd.DataFrame(
+                cart_similarity,
+                index=cart_matrix.index,
+                columns=cart_matrix.index
+        )
+            if user_id in cart_similarity_df.index:
+
+                cart_similar_users = (
+                    cart_similarity_df.loc[user_id]
+                    .drop(user_id)
+                    
                 )
 
-                cart_similarity = cosine_similarity(cart_matrix)
+                cart_similar_users = cart_similar_users[
+                    cart_similar_users > 0
+                ]
 
-                cart_similarity_df = pd.DataFrame(
-                    cart_similarity,
-                    index=cart_matrix.index,
-                    columns=cart_matrix.index
-                )
+                print("========== CART SIMILAR USERS ==========")
+                print(cart_similar_users)
+                print("========================================")
+            else:
+                cart_similar_users = pd.Series(dtype=float)
+
+        else:
+            cart_similar_users = pd.Series(dtype=float)
 
     else:
-                cart_similarity_df = pd.DataFrame()
+        cart_similar_users = pd.Series(dtype=float)
 
-
-        # -----------------------------
-        # Generate Recommendations
-        # -----------------------------
-
-    selected = df[
-            df["title"].str.lower() == title.lower()
-        ]
-
+    # -----------------------------
+    # Generate Recommendations
+    # -----------------------------
+    selected = df[df["title"].str.lower() == title.lower()]
     if selected.empty:
-            raise HTTPException(
-                status_code=404,
-                detail="Book not found"
-            )
+        raise HTTPException(status_code=404, detail="Book not found")
 
+    # Get the genre of the selected book
+    selected_book_genre = selected.iloc[0]["genre"]
 
     book_index = selected.index[0]
 
-
-    scores = list(
-            enumerate(similarity[book_index])
-        )
-
-
-    scores = sorted(
-            scores,
-            key=lambda x:x[1],
-            reverse=True
-        )
+    scores = list(enumerate(similarity[book_index]))
+    scores = sorted(scores, key=lambda x: x[1], reverse=True)
 
 
     recommendations = []
 
-    similar_cart_users=pd.Series(dtype=float)
-    if(
-         user_id is not None
-         and not cart_similarity_df.empty
-         and user_id in cart_similarity_df.index
-    ):
-         similar_cart_users=(
-              cart_similarity_df.loc[user_id]
-              .drop(user_id)
-              .sort_values(ascending=False)
-         )
-
     for i, content_score in scores[1:]:
 
-            book = df.iloc[i]
-            collaborative_score = 0
-            cart_score = 0
-            if not similar_cart_users.empty:
+        book = df.iloc[i]
 
-                total_cart_similarity = 0
+        # Skip already reviewed books
+        if int(book["id"]) in reviewed_books:
+            continue
 
-                for other_user, similarity_value in similar_cart_users.items():
+        # Skip books already in cart
+        if int(book["id"]) in cart_books:
+            continue
 
-                    cart_book = cart_df[
-                        (cart_df["user_id"] == other_user) &
-                        (cart_df["book_id"] == book["id"])
-                    ]
+        # ==========================================================
+        # 1. CART COLLABORATIVE SCORE
+        # ==========================================================
 
-                    if not cart_book.empty:
-                        cart_score += similarity_value
-                        total_cart_similarity += similarity_value
+        cart_score = 0.0
 
-                if total_cart_similarity > 0:
-                    cart_score /= total_cart_similarity
-                        
+        if (
+            user_id in cart_similarity_df.index
+            and book["id"] in cart_matrix.columns
+        ):
 
-    # -----------------------------
-    # Review Collaborative Score
-    # -----------------------------
-            weighted_rating = 0
-            total_review_similarity = 0
-
-            if not similar_users.empty:
-                 for other_user,similarity_value in similar_users.items():
-                      
-                      user_rating =reviews_df[
-                           (reviews_df["user_email"]== other_user)&
-                           (reviews_df["book_id"]==book["id"])
-                      ]
-                      if not user_rating.empty:
-                             weighted_rating += (
-                                  similarity_value*
-                                  user_rating.iloc[0]["rating"]
-                             )
-                           
-                             total_review_similarity += similarity_value
-
-            if total_review_similarity > 0:
-                 collaborative_score =(
-                      weighted_rating/
-                      total_review_similarity
-                 )/5
-            else:
-                 collaborative_score = 0
-                                    
-                           
-
-
-            # skip already viewed/reviewed/cart
-            if int(book["id"]) in reviewed_books:
-                continue
-
-            if int(book["id"]) in cart_books:
-                continue
-
-
-            # Content score
-            content_score = float(content_score)
-
-
-            # Genre preference
-            genre_score = 0
-
-            if book["genre"] in favorite_genres:
-                genre_score = 0.2
-
-
-            # Popularity
-            popularity_score = (
-                book["avg_rating"] * 0.3 +
-                book["review_count"] * 0.1 +
-                book["cart_count"] * 0.1
+            # Get users similar to current user based on cart activity
+            cart_similar_users = (
+                cart_similarity_df.loc[user_id]
+                .drop(user_id)
             )
 
+            # Only positive similarities
+            cart_similar_users = cart_similar_users[
+                cart_similar_users > 0
+            ]
 
-            final_score = (
-                content_score * 0.35+
-                genre_score* 0.15 +
-                popularity_score * 0.15+
-                collaborative_score * 0.20+
-                cart_score * 0.15          
+            if not cart_similar_users.empty:
+
+                book_cart_activity = cart_matrix.loc[
+                    cart_similar_users.index,
+                    book["id"]
+                ]
+
+                total_similarity = cart_similar_users.sum()
+
+                if total_similarity > 0:
+
+                    cart_score = (
+                        (
+                            cart_similar_users
+                            * book_cart_activity
+                        ).sum()
+                        / total_similarity
+                    )
+
+        # ==========================================================
+        # 2. REVIEW COLLABORATIVE SCORE
+        # ==========================================================
+
+        weighted_rating = 0.0
+        total_review_similarity = 0.0
+
+        if not review_similar_users.empty:
+
+            for other_user, similarity_value in review_similar_users.items():
+
+                user_rating = reviews_df[
+                    (reviews_df["user_email"] == other_user)
+                    &
+                    (reviews_df["book_id"] == book["id"])
+                ]
+
+                if not user_rating.empty:
+
+                    weighted_rating += (
+                        similarity_value
+                        * user_rating.iloc[0]["rating"]
+                    )
+
+                    total_review_similarity += similarity_value
+
+        collaborative_score = 0.0
+
+        if total_review_similarity > 0:
+
+            collaborative_score = (
+                weighted_rating
+                / total_review_similarity
+            ) / 5
+
+        # ==========================================================
+        # 3. CONTENT SCORE
+        # ==========================================================
+
+        content_score = float(content_score)
+
+        # ==========================================================
+        # 4. GENRE PREFERENCE SCORE
+        # ==========================================================
+
+        genre_score = (
+        1.0
+        if str(book["genre"]).strip().lower()
+        == str(selected_book_genre).strip().lower()
+        else 0.0
+    )
+        
+         #Give an additional preference if the genre is also
+        # one of the user's favorite genres.
+
+        favorite_genre_score = (
+            1.0
+            if str(book["genre"]).strip().lower() in [str(genre).strip().lower() for genre in favorite_genres]
+            else 0.0
             )
 
+        # ==========================================================
+        # 5. POPULARITY SCORE
+        # ==========================================================
 
-            recommendations.append({
+        popularity_score = (
+            book["normalized_avg_rating"] * 0.3
+            +
+            book["normalized_review_count"] * 0.1
+            +
+            book["normalized_cart_count"] * 0.1
+        )
 
-                "id": int(book["id"]),
-                "title": book["title"],
-                "author": book["author"],
-                "genre": book["genre"],
-                "similarity": round(final_score,2)
+        # ==========================================================
+        # 6. FINAL HYBRID SCORE
+        # ==========================================================
 
-            })
+        final_score = (
+            content_score * 0.50
+            +
+            genre_score * 0.20
+            +
+            favorite_genre_score * 0.10
+            +
+            popularity_score * 0.05
+            +
+            collaborative_score * 0.10
+            +
+            cart_score * 0.05
+        )
 
-
-    recommendations.sort(
-            key=lambda x:x["similarity"],
+        print(
+            book["title"],
+            "content:", round(content_score, 3),
+            "genre:", genre_score,
+            "favorite_genre:", favorite_genre_score,
+            "popularity:", round(popularity_score, 3),
+            "collaborative:", round(collaborative_score, 3),
+            "cart:", round(cart_score, 3),
+            "FINAL:", round(final_score, 3)
+        )
+        recommendations.append({
+            "id": int(book["id"]),
+            "title": book["title"],
+            "author": book["author"],
+            "genre": book["genre"],
+            "avg_rating": round(
+                float(book["actual_avg_rating"]),
+                1
+            ),
+            "recommendation_score": round(final_score, 3)
+        })
+        recommendations.sort(
+            key=lambda x: x["recommendation_score"],
             reverse=True
         )
+    
 
-    if len(recommendations) == 0:
-
-        fallback = (
-            df.sort_values(
-                "avg_rating",
-                ascending=False
-            )
-            [["id","title","author","genre"]]
-            .head(5)
-            .to_dict("records")
-        )
-
-        return {
-            "recommendations": fallback
-        }
-
-    return {
-            "recommendations": recommendations[:5]
-        }
+    return {"recommendations": recommendations[:5]}

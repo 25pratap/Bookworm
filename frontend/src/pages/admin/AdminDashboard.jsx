@@ -143,7 +143,7 @@ function AdminDashboard() {
 
       {/* Management */}
 
-      <div className="grid md:grid-cols-2 gap-8 mb-10">
+      <div className="grid md:grid-cols-3 gap-8 mb-10">
 
         <DashboardCard
           title="Manage Books"
@@ -159,6 +159,13 @@ function AdminDashboard() {
           icon="👥"
           color="bg-gradient-to-r from-purple-600 to-pink-500"
           to="/admin/manageusers"
+        />
+        <DashboardCard
+          title="Analytics"
+          description="View ratings and system statistics."
+          icon="📊"
+          color="bg-gradient-to-r from-orange-500 to-red-500"
+          to="/admin/analytics"
         />
 
       </div>

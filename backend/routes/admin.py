@@ -8,16 +8,65 @@ router = APIRouter()
 @router.get("/admin/stats")
 def admin_stats():
 
-    books = supabase.table("books").select("id", count="exact").execute()
+    # Total books
+    books = (
+        supabase
+        .table("books")
+        .select("id", count="exact")
+        .execute()
+    )
 
-    users = supabase.table("profiles").select("id", count="exact").execute()
+    # Total users
+    users = (
+        supabase
+        .table("profiles")
+        .select("id", count="exact")
+        .execute()
+    )
 
-    reviews = supabase.table("reviews").select("id", count="exact").execute()
+    # Get all reviews
+    reviews = (
+        supabase
+        .table("reviews")
+        .select("id, rating, book_id")
+        .execute()
+    )
+
+    review_data = reviews.data or []
+
+    # Total reviews
+    total_reviews = len(review_data)
+
+    # Average rating
+    if total_reviews > 0:
+        average_rating = round(
+            sum(float(r["rating"]) for r in review_data) / total_reviews,
+            2
+        )
+    else:
+        average_rating = 0
+
+    # Rating distribution
+    rating_distribution = {
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": 0
+    }
+
+    for review in review_data:
+        rating = str(int(float(review["rating"])))
+
+        if rating in rating_distribution:
+            rating_distribution[rating] += 1
 
     return {
-        "books": books.count,
-        "users": users.count,
-        "reviews": reviews.count
+        "books": books.count or 0,
+        "users": users.count or 0,
+        "reviews": total_reviews,
+        "average_rating": average_rating,
+        "rating_distribution": rating_distribution
     }
 
 @router.post("/books")

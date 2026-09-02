@@ -16,167 +16,283 @@ function EditBookPage() {
   const [pages, setPages] = useState("");
   const [stock, setStock] = useState("");
 
+  // --------------------------------------------------
+  // LOAD BOOK
+  // --------------------------------------------------
   useEffect(() => {
     fetch(`http://localhost:8000/books/${id}`)
-      .then((response) => response.json())
-      .then((data) => {
-        setTitle(data.title);
-        setAuthor(data.author);
-        setGenre(data.genre);
-        setDescription(data.description);
-        setPrice(data.price);
-        setCover(data.cover || "");
-        setPublicationDate(data.publication_date);
-        setPages(data.pages || "");
-        setStock(data.stock || "");
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Failed to load book");
+        }
+
+        return response.json();
       })
-      .catch((error) => 
-        console.error(error));
-        toast.error("Failed to load book details"); 
+      .then((data) => {
+        setTitle(data.title || "");
+        setAuthor(data.author || "");
+        setGenre(data.genre || "");
+        setDescription(data.description || "");
+        setPrice(data.price ?? "");
+        setCover(data.cover || "");
+
+        // Important: keep publication year as a number/string
+        setPublicationDate(
+          data.publication_date ?? ""
+        );
+
+        setPages(data.pages ?? "");
+        setStock(data.stock ?? "");
+      })
+      .catch((error) => {
+        console.error(error);
+        toast.error("Failed to load book details");
+      });
   }, [id]);
 
+  // --------------------------------------------------
+  // UPDATE BOOK
+  // --------------------------------------------------
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     const updatedBook = {
-      title,
-      author,
-      genre,
-      description,
+      title: title.trim(),
+      author: author.trim(),
+      genre: genre.trim(),
+      description: description.trim(),
       price: Number(price),
-      cover,
+      cover: cover.trim(),
       publication_date: Number(publicationDate),
       pages: Number(pages),
       stock: Number(stock),
     };
-    const token=localStorage.getItem("token");
 
-    const response = await fetch(
-      `http://localhost:8000/books/${id}`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(updatedBook),
+    const token = localStorage.getItem("token");
+
+    try {
+      const response = await fetch(
+        `http://localhost:8000/books/${id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(updatedBook),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        toast.error(
+          data.detail || "Failed to update book"
+        );
+        return;
       }
-    );
 
-   const data = await response.json();
+      toast.success(
+        data.message || "Book updated successfully!"
+      );
 
-if (!response.ok) {
+      setTimeout(() => {
+        navigate("/admin/managebooks");
+      }, 1200);
 
-  toast.error(data.detail || "Failed to update book");
-
-  return;
-
-}
-
-toast.success(data.message || "Book updated successfully!");
-
-setTimeout(() => {
-  navigate("/admin/managebooks");
-}, 1500);
+    } catch (error) {
+      console.error(error);
+      toast.error("Server error. Please try again.");
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-8">
+    <div className="min-h-screen bg-gray-100 py-10 px-4">
+
       <div className="max-w-xl mx-auto bg-white rounded-xl shadow-lg p-8">
 
-        <h1 className="text-3xl font-bold mb-6 text-center">
+        {/* TITLE */}
+        <h1 className="text-3xl font-bold text-gray-800 text-center mb-8">
           Edit Book
         </h1>
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className="space-y-4">
 
-          <input
-            type="text"
-            placeholder="Title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="border rounded w-full p-3 mb-4"
-            required
-          />
+          {/* TITLE */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Book Title
+            </label>
 
-          <input
-            type="text"
-            placeholder="Author"
-            value={author}
-            onChange={(e) => setAuthor(e.target.value)}
-            className="border rounded w-full p-3 mb-4"
-            required
-          />
-
-          <input
-            type="text"
-            placeholder="Genre"
-            value={genre}
-            onChange={(e) => setGenre(e.target.value)}
-            className="border rounded w-full p-3 mb-4"
-            required
-          />
-
-          <textarea
-            rows="5"
-            placeholder="Description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            className="border rounded w-full p-3 mb-4"
-            required
-          />
             <input
-            type="number"
-            placeholder="Price (Rs.)"
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
-            className="w-full border rounded-lg p-3 focus:ring-2 focus:ring-blue-500 outline-none"
-            required
-          />
-          <input
-            type="number"
-            value={publicationDate}
-            onChange={(e) => setPublicationDate(e.target.value)}
-            min="1000"
-            max="9999"
-            placeholder="Publication Year"
-            className="w-full border rounded-lg p-3 focus:ring-2 focus:ring-blue-500 outline-none"
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg p-3
+                         focus:ring-2 focus:ring-blue-500
+                         focus:border-blue-500 outline-none"
+              required
             />
+          </div>
 
-           <input
-            type="number"
-            placeholder="Number of Pages"
-            value={pages}
-            onChange={(e) => setPages(e.target.value)}
-            className="w-full border rounded-lg p-3 focus:ring-2 focus:ring-blue-500 outline-none"
+          {/* AUTHOR */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Author
+            </label>
+
+            <input
+              type="text"
+              value={author}
+              onChange={(e) => setAuthor(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg p-3
+                         focus:ring-2 focus:ring-blue-500
+                         focus:border-blue-500 outline-none"
+              required
             />
+          </div>
 
-           <input
-            type="number"
-            placeholder="Stock Quantity"
-            value={stock}
-            onChange={(e) => setStock(e.target.value)}
-            className="w-full border rounded-lg p-3 focus:ring-2 focus:ring-blue-500 outline-none"
+          {/* GENRE */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Genre
+            </label>
+
+            <input
+              type="text"
+              value={genre}
+              onChange={(e) => setGenre(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg p-3
+                         focus:ring-2 focus:ring-blue-500
+                         focus:border-blue-500 outline-none"
+              required
             />
+          </div>
 
-          <input
-            type="text"
-            placeholder="Cover Image URL (Optional)"
-            value={cover}
-            onChange={(e) => setCover(e.target.value)}
-            className="w-full border rounded-lg p-3 focus:ring-2 focus:ring-blue-500 outline-none"
-          />
+          {/* DESCRIPTION */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Book Description
+            </label>
 
+            <textarea
+              rows="5"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg p-3
+                         focus:ring-2 focus:ring-blue-500
+                         focus:border-blue-500 outline-none resize-y"
+              required
+            />
+          </div>
 
+          {/* PRICE */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Price (Rs.)
+            </label>
+
+            <input
+              type="number"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              min="0"
+              step="0.01"
+              className="w-full border border-gray-300 rounded-lg p-3
+                         focus:ring-2 focus:ring-blue-500
+                         focus:border-blue-500 outline-none"
+              required
+            />
+          </div>
+
+          {/* PUBLICATION YEAR */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Publication Year
+            </label>
+
+            <input
+              type="number"
+              value={publicationDate}
+              onChange={(e) =>
+                setPublicationDate(e.target.value)
+              }
+              min="1000"
+              max="9999"
+              className="w-full border border-gray-300 rounded-lg p-3
+                         focus:ring-2 focus:ring-blue-500
+                         focus:border-blue-500 outline-none"
+              required
+            />
+          </div>
+
+          {/* PAGES */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Number of Pages
+            </label>
+
+            <input
+              type="number"
+              value={pages}
+              onChange={(e) => setPages(e.target.value)}
+              min="1"
+              className="w-full border border-gray-300 rounded-lg p-3
+                         focus:ring-2 focus:ring-blue-500
+                         focus:border-blue-500 outline-none"
+              required
+            />
+          </div>
+
+          {/* STOCK */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Stock Quantity
+            </label>
+
+            <input
+              type="number"
+              value={stock}
+              onChange={(e) => setStock(e.target.value)}
+              min="0"
+              className="w-full border border-gray-300 rounded-lg p-3
+                         focus:ring-2 focus:ring-blue-500
+                         focus:border-blue-500 outline-none"
+              required
+            />
+          </div>
+
+          {/* COVER */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Cover Image URL
+              <span className="text-gray-400 font-normal">
+                {" "}(Optional)
+              </span>
+            </label>
+
+            <input
+              type="text"
+              value={cover}
+              onChange={(e) => setCover(e.target.value)}
+              placeholder="https://example.com/book-cover.jpg"
+              className="w-full border border-gray-300 rounded-lg p-3
+                         focus:ring-2 focus:ring-blue-500
+                         focus:border-blue-500 outline-none"
+            />
+          </div>
+
+          {/* UPDATE BUTTON */}
           <button
             type="submit"
-            className="bg-yellow-500 hover:bg-yellow-600 text-white w-full py-3 rounded-lg"
+            className="w-full bg-yellow-500 hover:bg-yellow-600
+                       text-white font-semibold py-3 rounded-lg
+                       transition duration-200 mt-3"
           >
             Update Book
           </button>
 
         </form>
-
       </div>
     </div>
   );

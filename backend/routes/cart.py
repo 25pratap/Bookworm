@@ -22,6 +22,7 @@ def add_to_cart(
         .execute()
     )
 
+    # Book already exists in cart
     if existing.data:
         current = existing.data[0]
 
@@ -34,19 +35,33 @@ def add_to_cart(
             .execute()
         )
 
-        return {"message": "Cart updated", "cart": result.data}
+        cart_score = 1.0
 
+        return {
+            "message": "Cart updated",
+            "cart": result.data,
+            "cart_score": cart_score
+        }
+
+    # Book does not exist → add it
     result = (
         supabase.table("cart")
         .insert({
-            "user_id": user["id"],   # ✅ secure
+            "user_id": user["id"],
             "book_id": cart.book_id,
             "quantity": cart.quantity
         })
         .execute()
     )
 
-    return {"message": "Book added to cart", "cart": result.data}
+    cart_score = 1.0
+
+    return {
+        "message": "Book added to cart",
+        "cart": result.data,
+        "cart_score": cart_score
+    }
+
 
 
 @router.get("/cart")
@@ -109,7 +124,23 @@ def remove_from_cart(
 
     if not existing.data:
         raise HTTPException(status_code=404, detail="Cart item not found")
+     # Delete only if it belongs to the logged-in user
+    deleted = (
+        supabase
+        .table("cart")
+        .delete()
+        .eq("id", cart_id)
+        .eq("user_id", user["id"])
+        .execute()
+    )
 
-    supabase.table("cart").delete().eq("id", cart_id).execute()
+    if not deleted.data:
+        raise HTTPException(
+            status_code=404,
+            detail="Cart item could not be removed"
+        )
 
-    return {"message": "Removed from cart"}
+    return {
+        "message": "Removed from cart",
+        "cart_id": cart_id
+    }

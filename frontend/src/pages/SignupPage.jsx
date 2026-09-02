@@ -19,19 +19,45 @@ function SignUpPage() {
   const handleSignup = async (e) => {
     e.preventDefault();
 
+    if(!name.trim()){
+      toast.error("Name is required!");
+      return;
+    }
+
+    if(!email.trim()){
+      toast.error("Email is required!");
+      return;
+    }
+
+    if(!password.trim()){
+      toast.error("Password is required!");
+      return;
+    }
+
+    if (password.length < 6) {
+      toast.error("Password must be at least 6 characters long!");
+      return;
+    }
+
+    if(!confirmPassword.trim()){
+      toast.error("Please confirm your password!");
+      return;
+    }
+
     if (password !== confirmPassword) {
       toast.error("Passwords do not match!");
       return;
     }
 
+  try{
     const res = await fetch("http://localhost:8000/register", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        name,
-        email,
+        name: name.trim(),
+        email: email.trim(),
         password,
         age: age ? Number(age) : null,
         gender,
@@ -50,19 +76,20 @@ function SignUpPage() {
       }, 1500);
 
     } else {
-
       console.log(data);
-
       toast.error(data.detail || "Signup failed");
-
     }
-  };
+  } catch (error) {
+    console.error("Error during signup:", error);
+    toast.error("An error occurred during signup. Please try again.");
+  }
+};
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
       <form
         onSubmit={handleSignup}
-        className="bg-white p-8 rounded-2xl shadow-lg w-105 space-y-5"
+        className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md space-y-5"
       >
         <h2 className="text-3xl font-bold text-center mb-2">
           Sign Up

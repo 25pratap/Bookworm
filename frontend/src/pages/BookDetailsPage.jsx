@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams,useNavigate} from "react-router-dom";
 import { toast } from "react-toastify";
+import Rating from "@mui/material/Rating";
 
 function BookDetailsPage() {
   const { id } = useParams();
@@ -179,7 +180,7 @@ function BookDetailsPage() {
                 className="border rounded-lg p-4 mb-4"
               >
                 <h3 className="font-semibold">
-                  {"⭐".repeat(review.rating)} {review.name}
+                  ⭐ {review.rating}/5 &nbsp; {review.name}
                 </h3>
 
                 <p>{review.comment}</p>
@@ -202,19 +203,20 @@ function BookDetailsPage() {
     Your Rating
   </label>
 
-  <div className="flex gap-2 mb-5">
+  <div className="mb-5">
+      <Rating
+        name="book-rating"
+        value={rating}
+        precision={0.5}
+        onChange={(event, newValue) => {
+          setRating(newValue);
+        }}
+        size="large"
+      />
 
-    {[1,2,3,4,5].map((star)=>(
-      <button
-        key={star}
-        type="button"
-        onClick={() => setRating(star)}
-        className="text-3xl"
-      >
-        {star <= rating ? "⭐" : "☆"}
-      </button>
-    ))}
-
+      <p className="mt-2">
+        Rating: {rating}
+        </p>
   </div>
 
 
