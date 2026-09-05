@@ -22,10 +22,13 @@ function DashboardCard({
         duration-300
         text-white
         p-5
+        min-h-47.5
+        flex
+        flex-col
       `}
     >
-
-      <div className="flex items-center gap-4">
+      {/* Icon +Text*/}
+      <div className="flex items-start gap-4">
 
         <div className="bg-white/20 p-3 rounded-lg text-3xl">
           {icon}
@@ -33,12 +36,11 @@ function DashboardCard({
 
 
         <div>
-
-          <h2 className="text-xl font-bold">
+          <h2 className="text-xl font-bold leading-6 min-h-12.25">
             {title}
           </h2>
 
-          <p className="text-white/90 mt-1 text-sm">
+          <p className="text-white/90 mt-1 text-sm leading-5">
             {description}
           </p>
 
@@ -46,8 +48,8 @@ function DashboardCard({
 
       </div>
 
-
-      <div className="mt-4 flex justify-between items-center">
+{/* Bottom Text */}
+      <div className="mt-auto pt-4 flex justify-between items-center">
 
         <div className="text-sm text-white/80">
           Manage your data

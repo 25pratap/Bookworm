@@ -14,6 +14,7 @@ function Analytics() {
       "4": 0,
       "5": 0,
     },
+    genre_distribution: {},
   });
 
   useEffect(() => {
@@ -48,7 +49,6 @@ function Analytics() {
 
   return (
     <div className="min-h-screen bg-gray-100 p-8">
-
       <div className="max-w-6xl mx-auto">
 
         {/* HEADER */}
@@ -105,7 +105,7 @@ function Analytics() {
             </p>
 
             <p className="text-4xl font-bold text-purple-600 mt-3">
-              {stats.average_rating}
+              {stats.average_rating?.toFixed(1) || 0}
               <span className="text-2xl ml-1">⭐</span>
             </p>
           </div>
@@ -115,15 +115,30 @@ function Analytics() {
         {/* RATING DISTRIBUTION */}
         <div className="bg-white rounded-xl shadow-md p-6 mt-8">
 
-          <h2 className="text-2xl font-bold text-gray-800 mb-6">
-            Rating Distribution
-          </h2>
+          <div className="flex items-center justify-between mb-6">
+
+            <div>
+              <h2 className="text-2xl font-bold text-gray-800">
+                Rating Distribution
+              </h2>
+
+              <p className="text-sm text-gray-500">
+                How users rated the books.
+              </p>
+            </div>
+
+            <span className="text-sm text-gray-500">
+              {stats.reviews} total reviews
+            </span>
+
+          </div>
+
 
           <div className="space-y-4">
 
             {[5, 4, 3, 2, 1].map((rating) => {
               const count =
-                stats.rating_distribution?.[rating] || 0;
+                stats.rating_distribution?.[String(rating)] || 0;
 
               const percentage =
                 stats.reviews > 0
@@ -154,8 +169,8 @@ function Analytics() {
                   </div>
 
                   {/* COUNT */}
-                  <div className="w-20 text-right text-gray-600">
-                    {count} review{count !== 1 ? "s" : ""}
+                  <div className="w-28 text-right text-sm text-gray-500">
+                    {count} ({percentage.toFixed(1)}%)
                   </div>
 
                 </div>
@@ -166,8 +181,83 @@ function Analytics() {
 
         </div>
 
-      </div>
 
+        {/* BOOKS BY GENRE */}
+        <div className="bg-white rounded-xl shadow-md p-6 mt-8">
+
+          <div className="flex items-center justify-between mb-6">
+
+            <div>
+              <h2 className="text-2xl font-bold text-gray-800">
+                Books by Genre
+              </h2>
+
+              <p className="text-sm text-gray-500">
+                Distribution of books across genres.
+              </p>
+            </div>
+
+            <span className="text-sm text-gray-500">
+              {stats.books} total books
+            </span>
+
+          </div>
+
+
+          <div className="space-y-5">
+
+            {Object.entries(stats.genre_distribution || {})
+              .sort(([, a], [, b]) => b - a)
+              .map(([genre, count]) => {
+
+                const maxCount = Math.max(
+                  ...Object.values(
+                    stats.genre_distribution || {}
+                  ),
+                  1
+                );
+
+                const percentage =
+                  (count / maxCount) * 100;
+
+                return (
+                  <div key={genre}>
+
+                    {/* GENRE + COUNT */}
+                    <div className="flex justify-between mb-2">
+
+                      <span className="font-medium text-gray-700">
+                        {genre}
+                      </span>
+
+                      <span className="text-sm font-semibold text-gray-600">
+                        {count}
+                      </span>
+
+                    </div>
+
+
+                    {/* BAR */}
+                    <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+
+                      <div
+                        className="bg-blue-500 h-full rounded-full transition-all duration-500"
+                        style={{
+                          width: `${percentage}%`,
+                        }}
+                      />
+
+                    </div>
+
+                  </div>
+                );
+              })}
+
+          </div>
+
+        </div>
+
+      </div>
     </div>
   );
 }

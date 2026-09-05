@@ -173,7 +173,7 @@ function ManageOrders() {
                         <p className="font-semibold text-gray-900">{order.name}</p>
                         <p className="text-xs text-gray-400">{order.user_email}</p>
                         <p className="text-xs text-gray-500 mt-0.5">📞 {order.phone}</p>
-                        <p className="text-xs text-gray-500">📍 {order.city}, {order.state}</p>
+                        <p className="text-xs text-gray-500">📌 {order.city}</p>
                       </td>
                       <td className="p-4">
                         <div className="flex items-center gap-3">

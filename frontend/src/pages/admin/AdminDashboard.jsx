@@ -139,11 +139,13 @@ function AdminDashboard() {
           lastUpdated={new Date().toLocaleString()}
         />
 
+        
+
       </div>
 
       {/* Management */}
 
-      <div className="grid md:grid-cols-3 lg:grid-cols-5 gap-6 mb-10">
+      <div className="grid md:grid-cols-5 gap-8 mb-10">
 
         <DashboardCard
           title="Manage Books"
@@ -153,7 +155,7 @@ function AdminDashboard() {
           to="/admin/managebooks"
         />
 
-        <DashboardCard
+         <DashboardCard
           title="Manage Orders"
           description="Track deliveries & update status."
           icon="📦"
@@ -163,7 +165,7 @@ function AdminDashboard() {
 
         <DashboardCard
           title="Manage Users"
-          description="Search, view and manage users."
+          description="Search, edit and delete users."
           icon="👥"
           color="bg-gradient-to-r from-purple-600 to-pink-500"
           to="/admin/manageusers"
@@ -179,9 +181,9 @@ function AdminDashboard() {
 
         <DashboardCard
           title="Analytics"
-          description="View store ratings & metrics."
+          description="View ratings and system statistics."
           icon="📊"
-          color="bg-gradient-to-r from-rose-500 to-red-500"
+          color="bg-gradient-to-r from-orange-500 to-red-500"
           to="/admin/analytics"
         />
 

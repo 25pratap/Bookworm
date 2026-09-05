@@ -8,42 +8,48 @@ function CartPage() {
   const [loading, setLoading] = useState(true);
   const token = localStorage.getItem("token");
 
+  const formatPrice = (value) => 
+  `Rs. ${new Intl.NumberFormat("en-NP", { 
+    minimumFractionDigits: 2, 
+    maximumFractionDigits: 2, 
+  }).format(Number(value) || 0)}`;
+
   const loadCart = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch("http://localhost:8000/cart", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+  try{
+    setLoading(true);
+    const res = await fetch("http://localhost:8000/cart", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
 
-      const data = await res.json();
+    const data = await res.json();
 
-      if (!res.ok) {
-        console.error("Cart error:", data);
-        setCart([]);
-        return;
-      }
-      setCart(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to load cart");
-    } finally {
-      setLoading(false);
+    if(!res.ok){
+      toast.error("Failed to fetch cart");
+      setCart([])
+      return;
     }
-  };
+    setCart(Array.isArray(data) ? data  : []);
+  } catch (error) {
+    toast.error("Failed to fetch cart");
+    setCart([]);
+  } finally {
+    setLoading(false);
+  }
+};
 
   useEffect(() => {
     if (token) loadCart();
   }, [token]);
 
   const updateQuantity = async (cartId, newQuantity) => {
-    if (newQuantity < 1) {
-      removeItem(cartId);
+    if(newQuantity < 1){
+      await removeItem(cartId);
       return;
-    }
+    } 
 
-    try {
+    try{
       const res = await fetch(`http://localhost:8000/cart/${cartId}?quantity=${newQuantity}`, {
         method: "PUT",
         headers: {
@@ -51,7 +57,7 @@ function CartPage() {
         },
       });
 
-      if (res.ok) {
+       if (res.ok) {
         setCart((prev) =>
           prev.map((item) =>
             item.id === cartId ? { ...item, quantity: newQuantity } : item
@@ -65,17 +71,19 @@ function CartPage() {
       toast.error("Server error");
     }
   };
+  
+
 
   const removeItem = async (id) => {
-    try {
+  try{
       const res = await fetch(`http://localhost:8000/cart/${id}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
 
-      if (res.ok) {
+    if (res.ok) {
         toast.success("Item removed from cart");
         setCart((prev) => prev.filter((item) => item.id !== id));
       } else {
@@ -93,9 +101,10 @@ function CartPage() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-100 py-10 px-4">
+    <div className="min-h-screen bg-gray-100 py-10">
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-4xl font-extrabold text-gray-900 mb-8">
+
+        <h1 className="text-4xl font-bold mb-8">
           Shopping Cart
         </h1>
 
@@ -107,21 +116,24 @@ function CartPage() {
         ) : cart.length === 0 ? (
           <div className="bg-white rounded-2xl shadow-md p-16 text-center border border-gray-100">
             <div className="text-6xl mb-4">🛒</div>
-            <h2 className="text-2xl font-bold text-gray-800">
+
+            <h2 className="text-2xl font-bold ">
               Your cart is empty
             </h2>
+
             <p className="text-gray-500 mt-2">
               Looks like you haven't added any books yet.
             </p>
+
             <Link
               to="/books"
-              className="inline-block mt-6 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-3 rounded-xl shadow transition"
+              className="inline-block mt-6 bg-blue-600 text-white px-6 py-3 rounded-lg"
             >
-              Explore Books
+              Browse Books
             </Link>
           </div>
         ) : (
-          <div className="grid lg:grid-cols-3 gap-8">
+            <div className="grid lg:grid-cols-3 gap-8">
             {/* Cart Items */}
             <div className="lg:col-span-2 space-y-4">
               {cart.map((item) => (
@@ -139,7 +151,7 @@ function CartPage() {
                           e.target.onerror = null;
                           e.target.src = noBook;
                         }}
-                        className="w-20 h-28 object-contain rounded-lg bg-gray-50 border p-1 shadow-xs"
+                        className="w-20 h-28 object-contain rounded-lg bg-gray-50 border p-1 shadow-sm"
                       />
                     </Link>
 
@@ -161,10 +173,11 @@ function CartPage() {
                       </p>
 
                       <p className="text-emerald-600 font-bold text-base mt-2">
-                        Rs. {item.books?.price}
+                        {formatPrice(item.books?.price)}
                       </p>
 
-                      {/* Quantity Controls */}
+
+                       {/* Quantity Controls */}
                       <div className="flex items-center gap-2 mt-3">
                         <span className="text-xs text-gray-500 font-medium">Quantity:</span>
                         <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden bg-gray-50">
@@ -190,7 +203,7 @@ function CartPage() {
 
                   <div className="flex sm:flex-col items-center sm:items-end justify-between w-full sm:w-auto gap-4 pt-3 sm:pt-0 border-t sm:border-t-0 border-gray-100">
                     <p className="text-lg font-extrabold text-gray-900">
-                      Rs. {((item.books?.price || 0) * item.quantity).toFixed(2)}
+                      {formatPrice((item.books?.price || 0) * item.quantity)}
                     </p>
 
                     <button
@@ -204,7 +217,8 @@ function CartPage() {
               ))}
             </div>
 
-            {/* Order Summary */}
+
+             {/* Order Summary */}
             <div>
               <div className="bg-white rounded-2xl shadow-md p-6 border border-gray-100 sticky top-24">
                 <h2 className="text-xl font-bold text-gray-900 mb-5 border-b pb-3">
@@ -213,19 +227,17 @@ function CartPage() {
 
                 <div className="space-y-3 text-sm text-gray-600">
                   <div className="flex justify-between">
-                    <span>Total Items ({cart.reduce((s, i) => s + i.quantity, 0)} units)</span>
-                    <span className="font-semibold text-gray-800">{cart.length} books</span>
+                    <span>Total Items </span>
+                    <span className="font-semibold text-gray-800">
+                      {cart.reduce((sum, item) => sum + item.quantity, 0)} items
+                    </span>
                   </div>
 
-                  <div className="flex justify-between">
-                    <span>Delivery Charge</span>
-                    <span className="font-semibold text-emerald-600">FREE</span>
-                  </div>
-
+                 
                   <div className="border-t pt-3 flex justify-between items-baseline">
                     <span className="font-bold text-gray-900 text-base">Grand Total</span>
                     <span className="font-extrabold text-2xl text-emerald-600">
-                      Rs. {total.toFixed(2)}
+                      {formatPrice(total)}
                     </span>
                   </div>
                 </div>

@@ -9,6 +9,7 @@ from utils.security import get_current_user,security
 
 router = APIRouter()
 
+    
 # Get all reviews (for Admin / general)
 @router.get("/reviews")
 def get_all_reviews():
@@ -50,7 +51,8 @@ def get_reviews(book_id: int):
             status_code=500, 
             detail="Failed to fetch reviews"
         )
-    #ADD REVIEW
+    
+#ADD REVIEW
 @router.post("/reviews")
 def add_review(
     review: Review,
