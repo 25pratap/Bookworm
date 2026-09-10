@@ -84,10 +84,10 @@ function RecommendationsPage() {
             <Link to="/books" className="hover:text-blue-600">← Back to Books Catalog</Link>
           </div>
           <h1 className="text-3xl font-extrabold text-gray-900">
-            Smart Recommendations
+            Recommendations
           </h1>
           <p className="text-gray-600 mt-1">
-            Personalized AI recommendations based on your selection: <span className="font-semibold text-blue-600">"{title}"</span>
+             Recommendations based on your selection: <span className="font-semibold text-blue-600">"{title}"</span>
           </p>
         </div>
 
@@ -165,11 +165,6 @@ function RecommendationsPage() {
                     <div className="flex items-center text-amber-500 font-bold text-sm">
                       ★ {book.avg_rating?.toFixed(1) ?? "0.0"} / 5
                     </div>
-                    {book.price > 0 && (
-                      <span className="text-emerald-600 font-bold text-base">
-                        Rs. {book.price}
-                      </span>
-                    )}
                   </div>
 
                   <div className="flex gap-2">
@@ -179,12 +174,7 @@ function RecommendationsPage() {
                     >
                       View Details
                     </Link>
-                    <button
-                      onClick={() => handleAddToCart(book.id)}
-                      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-sm transition"
-                    >
-                      + Add to Cart
-                    </button>
+                    
                   </div>
                 </div>
               </div>

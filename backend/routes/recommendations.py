@@ -565,9 +565,9 @@ def recommend_books(email: str, title: str):
         else:
             reason = "Popular choice among readers"
 
-        # Calculate a realistic percentage for UI (e.g., 75% - 98%)
-        raw_pct = int(final_score * 100)
-        display_pct = min(99, max(70, raw_pct + 45 if raw_pct < 50 else raw_pct + 20))
+        # Calculate a match percentage for UI
+        display_pct = round(final_score * 100)
+        display_pct = min(100, max(0, display_pct))
 
         recommendations.append({
             "id": int(book["id"]),
