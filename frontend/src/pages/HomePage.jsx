@@ -2,7 +2,7 @@ import { API_BASE_URL } from "../config/api";
 import { Link,useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import BookCard from "../components/BookCard";
-import Footer from "../components/footer";
+import Footer from "../components/Footer";
 
 
 function HomePage() {
