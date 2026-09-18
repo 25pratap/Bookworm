@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../config/api";
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -12,7 +13,7 @@ function OrdersPage() {
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
-      const response = await fetch("http://localhost:8000/delivery", {
+      const response = await fetch(`${API_BASE_URL}/delivery`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -42,7 +43,7 @@ function OrdersPage() {
 
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch(`http://localhost:8000/orders/${orderId}/cancel`, {
+      const response = await fetch(`${API_BASE_URL}/orders/${orderId}/cancel`, {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${token}`,

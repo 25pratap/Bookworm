@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../../config/api";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -13,7 +14,7 @@ function ManageOrders() {
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
-      const res = await fetch("http://localhost:8000/admin/orders", {
+      const res = await fetch(`${API_BASE_URL}/admin/orders`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -40,7 +41,7 @@ function ManageOrders() {
   const handleStatusChange = async (orderId, newStatus) => {
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`http://localhost:8000/admin/orders/${orderId}/status`, {
+      const res = await fetch(`${API_BASE_URL}/admin/orders/${orderId}/status`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

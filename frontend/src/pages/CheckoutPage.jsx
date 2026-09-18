@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../config/api";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -49,7 +50,7 @@ function Checkout() {
 
 
       const response = await fetch(
-        "http://localhost:8000/orders",
+        `${API_BASE_URL}/orders`,
         {
           method: "POST",
 

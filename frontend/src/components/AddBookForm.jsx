@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../config/api";
 import { useState } from "react";
 import { toast } from "react-toastify";
 function AddBookForm() {
@@ -38,7 +39,7 @@ function AddBookForm() {
       return;
     }
 
-    const response = await fetch("http://localhost:8000/books", {
+    const response = await fetch(`${API_BASE_URL}/books`, {
     method: "POST",
     headers: {
         "Content-Type": "application/json",

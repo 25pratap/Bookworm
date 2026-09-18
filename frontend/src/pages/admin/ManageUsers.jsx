@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../../config/api";
 import { useEffect, useState } from "react";
 import UserSearch from "../../components/UserSearch";
 import UserTable from "../../components/UserTable";
@@ -23,7 +24,7 @@ function ManageUsers() {
     try {
       setLoading(true);
 
-      const res = await fetch("http://localhost:8000/users");
+      const res = await fetch(`${API_BASE_URL}/users`);
       if (!res.ok) throw new Error("Failed to load users");
 
       const data = await res.json();
@@ -91,7 +92,7 @@ function ManageUsers() {
     const token=localStorage.getItem("token");
     try {
       const res = await fetch(
-        `http://localhost:8000/users/${selectedUser.id}`,
+        `${API_BASE_URL}/users/${selectedUser.id}`,
         {
           method: "DELETE",
           headers: {

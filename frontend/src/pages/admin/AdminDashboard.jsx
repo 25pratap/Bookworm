@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../../config/api";
 import { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
@@ -21,7 +22,7 @@ function AdminDashboard() {
   const loadStats = async () => {
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch("http://localhost:8000/admin/stats", {
+      const res = await fetch(`${API_BASE_URL}/admin/stats`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

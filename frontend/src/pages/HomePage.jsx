@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../config/api";
 import { Link,useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import BookCard from "../components/BookCard";
@@ -10,7 +11,7 @@ function HomePage() {
   const navigate=useNavigate();
 
   useEffect(() => {
-    fetch("http://localhost:8000/books")
+    fetch(`${API_BASE_URL}/books`)
       .then((res) => res.json())
       .then((data) => setBooks(Array.isArray(data) ? data.slice(0, 8) : []))
       .catch((err) => console.error(err));

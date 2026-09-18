@@ -405,10 +405,6 @@ def recommend_books(email: str, title: str):
 
         book = df.iloc[i]
 
-        # Skip already reviewed books
-        if int(book["id"]) in reviewed_books:
-            continue
-
         # Skip books already in cart
         if int(book["id"]) in cart_books:
             continue

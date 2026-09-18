@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../config/api";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -40,7 +41,7 @@ const savePreferences = async () => {
   }
 
   try {
-    const res = await fetch("http://localhost:8000/preferences", {
+    const res = await fetch(`${API_BASE_URL}/preferences`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",

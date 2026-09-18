@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../config/api";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -10,6 +11,13 @@ function PaymentPage() {
 
 
   const makePayment = async (method) => {
+     // eSewa is only displayed as a payment option
+      if (method === "eSewa" || method == "Khalti"){
+        toast.info(
+          `${method} payment is not integrated yet.`
+        );
+        return;
+    }
 
     try {
 
@@ -18,7 +26,7 @@ function PaymentPage() {
       const token = localStorage.getItem("token");
 
       const response = await fetch(
-              "http://localhost:8000/orders/payment",
+              `${API_BASE_URL}/orders/payment`,
               {
                 method: "PUT",
 
@@ -42,7 +50,7 @@ function PaymentPage() {
       }
 
 
-      toast.success("Payment successful");
+      toast.success("Order confirmed successfully");
       setTimeout(() => {
         navigate("/delivery");
       }, 1500);
@@ -69,7 +77,7 @@ function PaymentPage() {
       const token = localStorage.getItem("token");
 
       const response = await fetch(
-        "http://localhost:8000/orders/cancel",
+        `${API_BASE_URL}/orders/cancel`,
         {
           method: "PUT",
 

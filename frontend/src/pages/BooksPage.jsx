@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../config/api";
 import { useEffect, useState, useContext,useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import BookCard from "../components/BookCard";
@@ -34,7 +35,7 @@ const handleAddToCart = async (bookId) => {
   console.log("Token:", token);
 
   try {
-    const response = await fetch("http://localhost:8000/cart", {
+    const response = await fetch(`${API_BASE_URL}/cart`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -65,7 +66,7 @@ const handleAddToCart = async (bookId) => {
   useEffect(() => {
     if (!token) return;
     //Load all books
-    fetch("http://localhost:8000/books", {
+    fetch(`${API_BASE_URL}/books`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -80,7 +81,7 @@ const handleAddToCart = async (bookId) => {
   
       //load recommended books
       if (email) {
-        fetch(`http://localhost:8000/recommend/${encodeURIComponent(email)}`)
+        fetch(`${API_BASE_URL}/recommend/${encodeURIComponent(email)}`)
           .then(async (response) => {
             const data = await response.json();
             if (!response.ok) {

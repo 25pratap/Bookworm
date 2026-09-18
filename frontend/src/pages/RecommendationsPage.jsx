@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../config/api";
 import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -16,7 +17,7 @@ function RecommendationsPage() {
         const email = localStorage.getItem("email");
 
         const response = await fetch(
-          `http://localhost:8000/recommend/${encodeURIComponent(
+          `${API_BASE_URL}/recommend/${encodeURIComponent(
             email
           )}/${encodeURIComponent(title)}`
         );
@@ -49,7 +50,7 @@ function RecommendationsPage() {
     }
 
     try {
-      const response = await fetch("http://localhost:8000/cart", {
+      const response = await fetch(`${API_BASE_URL}/cart`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,

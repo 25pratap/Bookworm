@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../../config/api";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -20,7 +21,7 @@ function EditBookPage() {
   // LOAD BOOK
   // --------------------------------------------------
   useEffect(() => {
-    fetch(`http://localhost:8000/books/${id}`)
+    fetch(`${API_BASE_URL}/books/${id}`)
       .then((response) => {
         if (!response.ok) {
           throw new Error("Failed to load book");
@@ -72,7 +73,7 @@ function EditBookPage() {
 
     try {
       const response = await fetch(
-        `http://localhost:8000/books/${id}`,
+        `${API_BASE_URL}/books/${id}`,
         {
           method: "PUT",
           headers: {

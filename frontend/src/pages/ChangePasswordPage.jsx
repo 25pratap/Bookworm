@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../config/api";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -19,7 +20,7 @@ function ChangePasswordPage() {
       return;
     }
 
-    const res = await fetch("http://localhost:8000/change-password", {
+    const res = await fetch(`${API_BASE_URL}/change-password`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",

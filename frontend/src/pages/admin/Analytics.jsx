@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../../config/api";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 
@@ -21,7 +22,7 @@ function Analytics() {
     const loadStats = async () => {
       try {
         const response = await fetch(
-          "http://localhost:8000/admin/stats",
+          `${API_BASE_URL}/admin/stats`,
           {
             headers: {
               Authorization:

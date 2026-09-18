@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../config/api";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -17,7 +18,7 @@ function CartPage() {
   const loadCart = async () => {
   try{
     setLoading(true);
-    const res = await fetch("http://localhost:8000/cart", {
+    const res = await fetch(`${API_BASE_URL}/cart`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -50,7 +51,7 @@ function CartPage() {
     } 
 
     try{
-      const res = await fetch(`http://localhost:8000/cart/${cartId}?quantity=${newQuantity}`, {
+      const res = await fetch(`${API_BASE_URL}/cart/${cartId}?quantity=${newQuantity}`, {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -76,7 +77,7 @@ function CartPage() {
 
   const removeItem = async (id) => {
   try{
-      const res = await fetch(`http://localhost:8000/cart/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/cart/${id}`, {
       method: "DELETE",
       headers: {
         Authorization: `Bearer ${token}`,

@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../../config/api";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -14,7 +15,7 @@ function ManageBooks() {
   const [booksPerPage, setBooksPerPage] = useState(10);
 
   const loadBooks = async () => {
-    const res = await fetch("http://localhost:8000/books");
+    const res = await fetch(`${API_BASE_URL}/books`);
     const data = await res.json();
     setBooks(data);
   };
@@ -27,7 +28,7 @@ function ManageBooks() {
 const deleteBook = async (id) => {
   const token = localStorage.getItem("token");
   try {
-    const response = await fetch(`http://localhost:8000/books/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/books/${id}`, {
       method: "DELETE",
        headers: {
         Authorization: `Bearer ${token}`,

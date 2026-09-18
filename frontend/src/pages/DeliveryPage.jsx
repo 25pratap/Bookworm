@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../config/api";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import noBook from "../assets/no-book.png";
@@ -10,7 +11,7 @@ function DeliveryPage() {
     const getOrder = async () => {
       try {
         const token = localStorage.getItem("token");
-        const response = await fetch("http://localhost:8000/delivery", {
+        const response = await fetch(`${API_BASE_URL}/delivery`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },

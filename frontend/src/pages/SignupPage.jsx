@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../config/api";
 import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -50,7 +51,7 @@ function SignUpPage() {
     }
 
   try{
-    const res = await fetch("http://localhost:8000/register", {
+    const res = await fetch(`${API_BASE_URL}/register`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

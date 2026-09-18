@@ -14,6 +14,7 @@ def get_books():
             "id, title, author, genre, price, cover, "
             "publication_date, pages, stock, description"
         )
+        .order("id",desc=True)
         .execute()
     )
 

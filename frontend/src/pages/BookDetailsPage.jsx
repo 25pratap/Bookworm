@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../config/api";
 import { useEffect, useState } from "react";
 import { useParams,useNavigate,Link} from "react-router-dom";
 import { toast } from "react-toastify";
@@ -25,7 +26,7 @@ function BookDetailsPage() {
   const inStock = Number(book?.stock ?? 0) > 0;
 
   useEffect(() => {
-    fetch(`http://127.0.0.1:8000/books/${id}`)
+    fetch(`${API_BASE_URL}/books/${id}`)
       .then((response) =>{
         if (!response.ok) throw new Error("Failed to load book");
         return response.json();
@@ -44,7 +45,7 @@ function BookDetailsPage() {
     try {
 
       const response = await fetch(
-        `http://127.0.0.1:8000/reviews/${id}`
+        `${API_BASE_URL}/reviews/${id}`
       );
 
 
@@ -78,7 +79,7 @@ function BookDetailsPage() {
             comment:comment.trim()
           };
 
-      const res = await fetch("http://127.0.0.1:8000/reviews", {
+      const res = await fetch(`${API_BASE_URL}/reviews`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

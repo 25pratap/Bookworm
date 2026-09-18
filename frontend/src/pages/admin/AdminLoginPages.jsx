@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../../config/api";
 import { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../../context/AuthContext";
@@ -20,7 +21,7 @@ function AdminLoginPage() {
         setLoading(true);
 
         try {
-            const response = await fetch("http://localhost:8000/login", {
+            const response = await fetch(`${API_BASE_URL}/login`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

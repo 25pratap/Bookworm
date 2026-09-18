@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../../config/api";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -17,7 +18,7 @@ function ManageReviews() {
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
-      const res = await fetch("http://localhost:8000/reviews", {
+      const res = await fetch(`${API_BASE_URL}/reviews`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -47,7 +48,7 @@ function ManageReviews() {
     const token = localStorage.getItem("token");
 
     const response = await fetch(
-      `http://localhost:8000/reviews/${id}`,
+      `${API_BASE_URL}/reviews/${id}`,
       {
         method: "DELETE",
         headers: {
