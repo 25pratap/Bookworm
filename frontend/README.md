@@ -1,5 +1,16 @@
 # React + Vite
 
+## Deployment configuration
+
+Set `VITE_API_URL` to the public backend URL before building the frontend. Vite
+embeds this value in the static bundle, so redeploy the frontend after changing it.
+
+For Render, configure the frontend service with
+`VITE_API_URL=https://<your-backend-service>.onrender.com` and the backend service
+with `FRONTEND_ORIGINS=https://<your-frontend-service>.onrender.com` (no trailing
+slash). The Nginx configuration supports direct React Router URLs such as
+`/admin/login`.
+
 This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
 
 Currently, two official plugins are available:
