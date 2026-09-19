@@ -1,5 +1,4 @@
 from fastapi import APIRouter, HTTPException
-from numpy import select
 from database.supabase_client import supabase
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -134,11 +133,11 @@ def initial_recommendations(email: str):
 def recommend_books(email: str, title: str):
 
     # Fetch all books
-    result = supabase.table("books").select("*").execute()
-    if not result.data:
+    book_result = supabase.table("books").select("*").execute()
+    if not book_result.data:
         raise HTTPException(status_code=404, detail="No books found")
 
-    df = pd.DataFrame(result.data)
+    df = pd.DataFrame(book_result.data)
 
     # Fetch all reviews
     reviews_result =(
@@ -233,7 +232,7 @@ def recommend_books(email: str, title: str):
         if col not in df.columns:
             df[col] = ""
 
-    # Combine text for TF-IDF
+    # Content based filtering
     df["content"] = (
         df["title"].fillna("") + " " +
         df["author"].fillna("") + " " +
@@ -261,6 +260,7 @@ def recommend_books(email: str, title: str):
         raise HTTPException(status_code=404, detail="Profile not found")
 
     favorite_genres = profile.data.get("favorite_genres", [])
+   
     user_id = profile.data["id"]
 
     user_reviews = reviews_df[reviews_df["user_email"] == email]
@@ -316,20 +316,48 @@ def recommend_books(email: str, title: str):
             columns="book_id",
             values="rating"
         )
+        if email in rating_matrix.index:
+            current_user_ratings = rating_matrix.loc[email]
+            similarities ={}
+            for other_user in rating_matrix.index:
+                if other_user == email:
+                    continue
+                other_user_ratings = rating_matrix.loc[other_user]
+                #only compare books both user rated
+                common_books =(
+                   current_user_ratings.notna()
+                   & other_user_ratings.notna()
+               )
+                if common_books.sum() < 2:
+                    continue
+                current_vector = (
+                    current_user_ratings[
+                        common_books
+                    ]
+                    .values
+                    .reshape(1,-1)
+                )
 
-        user_similarity = cosine_similarity(rating_matrix.fillna(0))
+                other_vector =(
+                    other_user_ratings[
+                        common_books
+                    ]
+                    .values
+                    .reshape(1,-1)
+                )
 
-        review_similarity_df = pd.DataFrame(
-            user_similarity,
-            index=rating_matrix.index,
-            columns=rating_matrix.index
-        )
+                similarity_value = cosine_similarity(
+                    current_vector,
+                    other_vector
+                )[0][0]
 
-        if email in review_similarity_df.index:
+                if similarity_value > 0:
+                    similarities[other_user] =similarity_value
+             
             review_similar_users = (
-                review_similarity_df[email]
+               pd.Series(similarities)
                 .sort_values(ascending=False)
-                .drop(email)
+            
             )
             print("==========  REVIEW SIMILAR USERS ==========")
             print(review_similar_users)
@@ -405,6 +433,10 @@ def recommend_books(email: str, title: str):
 
         book = df.iloc[i]
 
+        # Skip books already reviewd
+        if int(book["id"]) in reviewed_books:
+            continue
+
         # Skip books already in cart
         if int(book["id"]) in cart_books:
             continue
@@ -449,6 +481,7 @@ def recommend_books(email: str, title: str):
                         ).sum()
                         / total_similarity
                     )
+                    cart_score =min(float(cart_score),1.0)
 
         # ==========================================================
         # 2. REVIEW COLLABORATIVE SCORE
@@ -527,28 +560,33 @@ def recommend_books(email: str, title: str):
         # 6. FINAL HYBRID SCORE
         # ==========================================================
 
+        hybrid_score =(
+            content_score * 0.60
+            +
+            collaborative_score * 0.40
+        )
+        #Additional personalization signals
         final_score = (
-            content_score * 0.50
+            hybrid_score * 0.80
             +
-            genre_score * 0.20
+            genre_score * 0.05
             +
-            favorite_genre_score * 0.10
+            favorite_genre_score * 0.05
             +
             popularity_score * 0.05
-            +
-            collaborative_score * 0.10
             +
             cart_score * 0.05
         )
 
         print(
             book["title"],
-            "content:", round(content_score, 3),
-            "genre:", genre_score,
-            "favorite_genre:", favorite_genre_score,
-            "popularity:", round(popularity_score, 3),
-            "collaborative:", round(collaborative_score, 3),
-            "cart:", round(cart_score, 3),
+            "CONTENT:", round(content_score, 3),
+            "COLLABORATIVE:",round(collaborative_score,3),
+            "HYBRID:",round(hybrid_score,3),
+            "GENRE:", genre_score,
+            "FAVORITE_GENRE:", favorite_genre_score,
+            "POPULARITY:", round(popularity_score, 3),
+            "CART:", round(cart_score, 3),
             "FINAL:", round(final_score, 3)
         )
         # Determine understandable reason for presentation/evaluation
@@ -580,9 +618,9 @@ def recommend_books(email: str, title: str):
             "match_percentage": display_pct,
             "reason": reason,
         })
-        recommendations.sort(
-            key=lambda x: x["recommendation_score"],
-            reverse=True
-        )
+    recommendations.sort(
+        key=lambda x: x["recommendation_score"],
+        reverse=True
+    )
 
     return {"recommendations": recommendations[:5]}
