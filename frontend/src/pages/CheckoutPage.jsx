@@ -30,12 +30,21 @@ function Checkout() {
   const placeOrder = async () => {
 
     if (
-      !formData.name ||
-      !formData.phone ||
+      formData.name.length < 2 || formData.name.length > 100){
+        setMessage("Please fill all details");
+        setMessageType("error");
+        return;
+      }     
+    if(!/^98\d{8}$/.test(formData.phone)){
+        setMessage("Phone number must be exactly 10 digits and start with 98");
+        setMessageType("error");
+        return;
+      }
+    if(
       !formData.address ||
       !formData.city ||
       !formData.state
-    ) {
+    ){
       setMessage("Please fill all details");
       setMessageType("error");
       return;

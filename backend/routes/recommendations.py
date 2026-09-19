@@ -288,6 +288,7 @@ def recommend_books(email: str, title: str):
         df = df.sort_values("popularity", ascending=False)
 
         recs = []
+
         for _, book in df.head(5).iterrows():
             recs.append({
                 "id": int(book["id"]),
@@ -296,7 +297,11 @@ def recommend_books(email: str, title: str):
                 "genre": book["genre"],
                 "price": float(book.get("price") or 0),
                 "cover": book.get("cover") or "",
-                "avg_rating": round(float(book.get("actual_avg_rating") or book.get("rating") or 0), 1),
+                "avg_rating": round(
+                    0 if pd.isna(book.get("actual_avg_rating"))
+                    else float(book.get("actual_avg_rating")),
+                    1
+                ),
                 "recommendation_score": round(float(book.get("popularity", 0.85)), 2),
                 "match_percentage": 88,
                 "reason": "Top rated book in popular categories",
@@ -611,7 +616,7 @@ def recommend_books(email: str, title: str):
             "price": float(book.get("price") or 0),
             "cover": book.get("cover") or "",
             "avg_rating": round(
-                float(book["actual_avg_rating"]),
+                0 if pd.isna(book["actual_avg_rating"]) else float(book["actual_avg_rating"]),
                 1
             ),
             "recommendation_score": round(final_score, 3),

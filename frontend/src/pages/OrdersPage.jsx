@@ -7,8 +7,10 @@ import noBook from "../assets/no-book.png";
 function OrdersPage() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [selectedOrderId, setSelectedOrderId] = useState(null);
   const navigate = useNavigate();
-
   const getOrders = async () => {
     try {
       setLoading(true);
@@ -38,9 +40,7 @@ function OrdersPage() {
   }, []);
 
   const cancelOrder = async (orderId) => {
-    const confirmed = window.confirm("Are you sure you want to cancel this order?");
-    if (!confirmed) return;
-
+  
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(`${API_BASE_URL}/orders/${orderId}/cancel`, {
@@ -62,11 +62,20 @@ function OrdersPage() {
           order.id === orderId ? { ...order, status: "Cancelled" } : order
         )
       );
+      setShowCancelModal(false);
+      setSelectedOrderId(null);
     } catch (error) {
       console.error(error);
       toast.error("Failed to cancel order");
     }
   };
+  const openCancelModal = (orderId) => {
+    setSelectedOrderId(orderId);
+    setShowCancelModal(true); };
+
+  const closeCancelModal = () => { 
+    setShowCancelModal(false); 
+    setSelectedOrderId(null); };
 
   const getStatusBadge = (status) => {
     switch (status?.toLowerCase()) {
@@ -213,7 +222,7 @@ function OrdersPage() {
                       Complete Payment
                     </button>
                     <button
-                      onClick={() => cancelOrder(order.id)}
+                      onClick={() => openCancelModal(order.id)}
                       className="px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg text-xs font-semibold transition"
                     >
                       Cancel Order
@@ -225,6 +234,51 @@ function OrdersPage() {
           </div>
         )}
       </div>
+      {showCancelModal && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+      
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-12 h-12 rounded-full bg-rose-100 flex items-center justify-center text-2xl">
+          ⚠️
+        </div>
+
+        <div>
+          <h2 className="text-xl font-bold text-gray-900">
+            Cancel Order?
+          </h2>
+          <p className="text-sm text-gray-500">
+            Order #{selectedOrderId}
+          </p>
+        </div>
+      </div>
+
+      <p className="text-gray-600 text-sm leading-6 mb-6">
+        Are you sure you want to cancel this order? This action cannot be
+        undone.
+      </p>
+
+      <div className="flex justify-end gap-3">
+        <button
+          onClick={() => {
+            setShowCancelModal(false);
+            setSelectedOrderId(null);
+          }}
+          className="px-5 py-2.5 rounded-lg border border-gray-300 text-gray-700 font-semibold text-sm hover:bg-gray-100 transition"
+        >
+          No, Keep Order
+        </button>
+
+        <button
+          onClick={() => cancelOrder(selectedOrderId)}
+          className="px-5 py-2.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-semibold text-sm transition"
+        >
+          Yes, Cancel Order
+        </button>
+      </div>
+    </div>
+  </div>
+)}
     </div>
   );
 }

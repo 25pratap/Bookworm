@@ -4,19 +4,11 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
 const genreOptions = [
-  "Fiction",
-  "Mystery",
-  "Thriller",
-  "Romance",
-  "Fantasy",
-  "Science Fiction",
   "Biography",
-  "History",
   "Self-Help",
   "Business",
-  "Children's",
-  "Young Adult",
-  "Programming"
+  "Programming",
+  "Textbook"
 ];
 
 function GenrePreferencePage() {
